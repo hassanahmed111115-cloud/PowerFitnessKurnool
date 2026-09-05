@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PowerFitnessKurnool — Complete Gym Management & Fitness Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            gym: {
+              bg: '#080b11',
+              card: '#101622',
+              cardHover: '#161f30',
+              border: '#1f293d',
+              orange: '#ff5722',
+              orangeHover: '#f4511e',
+              orangeGlow: 'rgba(255, 87, 34, 0.25)',
+              gold: '#f59e0b',
+              emerald: '#10b981',
+              crimson: '#ef4444',
+              cyan: '#06b6d4',
+              textMuted: '#94a3b8'
+            }
+          },
+          fontFamily: {
+            sans: ['Montserrat', 'sans-serif'],
+            display: ['Oswald', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-gym-bg text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-gym-orange selection:text-white">
+
+  <!-- TOP TOAST CONTAINER -->
+  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- AUTH / LOGIN MODAL / FULLVIEW -->
+  <div id="authView" class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <!-- Ambient Background Gradients -->
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-gym-orange/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-gym-cyan/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="w-full max-w-md bg-gym-card/90 border border-gym-border backdrop-blur-xl rounded-2xl shadow-2xl p-8 relative z-10">
+      <!-- Gym Logo & Branding -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-gym-orange to-amber-500 shadow-lg shadow-gym-orangeGlow mb-4">
+          <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+          </svg>
+        </div>
+        <h1 class="font-display tracking-wider text-3xl font-bold uppercase text-white tracking-tight">
+          Power<span class="text-gym-orange">Fitness</span>Kurnool
+        </h1>
+        <p class="text-xs font-semibold text-gym-orange tracking-widest uppercase mt-1">
+          "Build Your Body. Build Your Discipline."
+        </p>
+      </div>
+
+      <!-- Quick Role Toggle Tabs -->
+      <div class="flex rounded-xl bg-slate-900/80 p-1 border border-gym-border mb-6">
+        <button id="tabAdmin" onclick="setLoginTab('ADMIN')" class="flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 bg-gym-orange text-white shadow">
+          Admin Portal
+        </button>
+        <button id="tabUser" onclick="setLoginTab('USER')" class="flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 text-slate-400 hover:text-white">
+          Member Login
+        </button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" onsubmit="handleLogin(event); return false;" class="space-y-4">
+        <!-- Visible Login Error Notification Banner -->
+        <div id="loginErrorMsg" class="hidden p-3 rounded-xl bg-red-950/90 border border-red-500/60 text-red-200 text-xs flex items-center gap-2.5 transition">
+          <svg class="w-4 h-4 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span id="loginErrorText" class="font-medium">Invalid username or password.</span>
+        </div>
+
+        <div>
+          <label id="usernameLabel" class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Admin Username</label>
+          <div class="relative">
+            <input type="text" id="loginUsername" required oninput="clearLoginError()" class="w-full bg-slate-900/90 border border-gym-border rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange focus:ring-1 focus:ring-gym-orange transition" placeholder="e.g. admin">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Password</label>
+          <div class="relative">
+            <input type="password" id="loginPassword" required oninput="clearLoginError()" class="w-full bg-slate-900/90 border border-gym-border rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange focus:ring-1 focus:ring-gym-orange transition" placeholder="Enter password">
+          </div>
+        </div>
+
+        <button type="button" id="loginSubmitBtn" onclick="handleLogin(event)" class="w-full cursor-pointer bg-gradient-to-r from-gym-orange to-red-600 hover:from-gym-orangeHover hover:to-red-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-gym-orangeGlow transition-all duration-200 flex items-center justify-center gap-2 mt-2">
+          <span>Enter PowerFitness</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
+      </form>
+
+      <!-- Instant Demo Testing Pills -->
+      <div class="mt-8 pt-6 border-t border-gym-border/60">
+        <p class="text-[11px] font-bold uppercase tracking-widest text-slate-400 text-center mb-3">Instant Demo Logins</p>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="fillDemo('admin', 'admin123', 'ADMIN')" class="p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-gym-border text-left transition hover:border-gym-orange">
+            <span class="block text-xs font-bold text-gym-orange">⚡ Gym Owner</span>
+            <span class="block text-[10px] text-slate-400">admin / admin123</span>
+          </button>
+          <button onclick="fillDemo('9876543210', 'user123', 'USER')" class="p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-gym-border text-left transition hover:border-gym-emerald">
+            <span class="block text-xs font-bold text-gym-emerald">⚡ Active Member</span>
+            <span class="block text-[10px] text-slate-400">Rahul (42 Days Left)</span>
+          </button>
+          <button onclick="fillDemo('9876543211', 'user123', 'USER')" class="p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-gym-border text-left transition hover:border-gym-gold">
+            <span class="block text-xs font-bold text-gym-gold">⚡ Expiring Soon</span>
+            <span class="block text-[10px] text-slate-400">Suresh (5 Days Left)</span>
+          </button>
+          <button onclick="fillDemo('9876543212', 'user123', 'USER')" class="p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-gym-border text-left transition hover:border-gym-crimson">
+            <span class="block text-xs font-bold text-gym-crimson">⚡ Expired Member</span>
+            <span class="block text-[10px] text-slate-400">Priya (Renew Alert)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP WRAPPER (HIDDEN WHEN LOGGED OUT) -->
+  <div id="mainApp" class="hidden min-h-screen flex flex-col md:flex-row bg-gym-bg">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="w-full md:w-64 bg-gym-card border-r border-gym-border flex flex-col flex-shrink-0 z-30 transition-all duration-300">
+      <!-- Brand Header -->
+      <div class="p-5 border-b border-gym-border flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-gym-orange to-amber-500 flex items-center justify-center shadow-md shadow-gym-orangeGlow flex-shrink-0">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+            </svg>
+          </div>
+          <div>
+            <span class="font-display font-bold text-lg uppercase tracking-wide text-white block leading-none">
+              Power<span class="text-gym-orange">Fitness</span>
+            </span>
+            <span class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Kurnool</span>
+          </div>
+        </div>
+        <button onclick="toggleMobileNav()" class="md:hidden text-slate-400 hover:text-white p-1">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Navigation Links Container -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-1" id="navLinksContainer">
+        <!-- Injected dynamically based on role -->
+      </div>
+
+      <!-- User Profile Widget in Sidebar Bottom -->
+      <div class="p-4 border-t border-gym-border bg-slate-900/50">
+        <div class="flex items-center gap-3">
+          <div onclick="handleProfileAreaClick()" class="cursor-pointer flex items-center gap-3 flex-1 min-w-0 group" title="Account / Profile Settings">
+            <img id="sidebarUserPhoto" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" class="w-10 h-10 rounded-xl object-cover border border-gym-border group-hover:border-gym-orange transition">
+            <div class="flex-1 min-w-0">
+              <p id="sidebarUserName" class="text-xs font-bold text-white truncate group-hover:text-gym-orange transition">User Name</p>
+              <span id="sidebarUserRole" class="inline-block text-[10px] uppercase font-bold text-gym-orange">ADMIN</span>
+            </div>
+          </div>
+          <button onclick="logout()" title="Logout" class="text-slate-400 hover:text-gym-crimson p-1.5 rounded-lg hover:bg-slate-800 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENT AREA -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <!-- TOP NAVBAR -->
+      <header class="bg-gym-card/70 border-b border-gym-border backdrop-blur sticky top-0 z-20 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <button onclick="toggleMobileNav()" class="md:hidden text-slate-400 hover:text-white p-1">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div>
+            <h2 id="pageTitle" class="font-display font-bold text-xl uppercase tracking-wide text-white">Dashboard</h2>
+            <p id="pageSubtitle" class="text-xs text-slate-400 font-medium">PowerFitness Gym Management System</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <!-- Admin Profile / Account Trigger -->
+          <button id="adminAccountBtn" onclick="openAdminAccountModal()" class="hidden items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-gym-border hover:border-gym-orange text-xs text-slate-300 hover:text-white transition shadow-sm" title="Manage Administrator Credentials">
+            <span class="text-sm">👤</span>
+            <span class="font-bold hidden sm:inline" id="headerAdminName">Admin</span>
+            <span class="text-[9px] uppercase font-bold text-gym-orange bg-gym-orange/10 px-1.5 py-0.5 rounded border border-gym-orange/30">Account</span>
+          </button>
+
+          <!-- Notification Bell -->
+          <div class="relative">
+            <button onclick="toggleNotificationsDropdown()" class="relative p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800/80 border border-gym-border hover:border-slate-700 transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              <span id="notifBadge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-gym-orange text-[10px] font-bold text-white rounded-full flex items-center justify-center">0</span>
+            </button>
+            <!-- Dropdown -->
+            <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-80 bg-gym-card border border-gym-border rounded-2xl shadow-2xl p-4 z-50">
+              <div class="flex items-center justify-between pb-2 mb-2 border-b border-gym-border">
+                <span class="text-xs font-bold uppercase tracking-wider text-white">Notifications</span>
+                <span id="notifCountText" class="text-[10px] text-gym-orange font-semibold">0 unread</span>
+              </div>
+              <div id="notifList" class="max-h-64 overflow-y-auto space-y-2 text-xs">
+                <p class="text-slate-500 text-center py-4">No notifications</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contextual Quick Action Button for Admin -->
+          <div id="adminQuickActions" class="hidden"></div>
+        </div>
+      </header>
+
+      <!-- VIEW PANELS -->
+      <div class="p-6 flex-1" id="viewContainer">
+
+        <!-- ================= ADMIN DASHBOARD ================= -->
+        <section id="viewAdminDashboard" class="space-y-6">
+          <!-- 13 KPI CARDS GRID -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Active Members -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5 relative overflow-hidden group hover:border-gym-emerald/50 transition">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Members</span>
+                <span class="w-9 h-9 rounded-xl bg-gym-emerald/10 text-gym-emerald flex items-center justify-center font-bold">💪</span>
+              </div>
+              <p id="kpiActiveMembers" class="text-3xl font-display font-bold text-white mt-2">--</p>
+              <div class="flex items-center gap-2 mt-2 text-[11px] text-gym-emerald">
+                <span>● Operational Capacity</span>
+              </div>
+            </div>
+
+            <!-- Expired Members -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5 relative overflow-hidden group hover:border-gym-crimson/50 transition">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Expired Members</span>
+                <span class="w-9 h-9 rounded-xl bg-gym-crimson/10 text-gym-crimson flex items-center justify-center font-bold">❌</span>
+              </div>
+              <p id="kpiExpiredMembers" class="text-3xl font-display font-bold text-white mt-2">--</p>
+              <div class="flex items-center gap-2 mt-2 text-[11px] text-gym-crimson">
+                <span>● Renewal Required</span>
+              </div>
+            </div>
+
+            <!-- Expiring Soon (<= 7 Days) -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5 relative overflow-hidden group hover:border-gym-gold/50 transition">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Expiring Soon</span>
+                <span class="w-9 h-9 rounded-xl bg-gym-gold/10 text-gym-gold flex items-center justify-center font-bold">⚠️</span>
+              </div>
+              <p id="kpiExpiringSoon" class="text-3xl font-display font-bold text-white mt-2">--</p>
+              <div class="flex items-center gap-2 mt-2 text-[11px] text-gym-gold">
+                <span>● Next 7 Days</span>
+              </div>
+            </div>
+
+            <!-- Today's Admissions -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5 relative overflow-hidden group hover:border-gym-cyan/50 transition">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Today's Admissions</span>
+                <span class="w-9 h-9 rounded-xl bg-gym-cyan/10 text-gym-cyan flex items-center justify-center font-bold">✨</span>
+              </div>
+              <p id="kpiTodayAdmissions" class="text-3xl font-display font-bold text-white mt-2">--</p>
+              <div class="flex items-center gap-2 mt-2 text-[11px] text-gym-cyan">
+                <span>● New Athletes Joined</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- BATCH & CATEGORY ROW -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-slate-900/80 border border-gym-border rounded-xl p-4">
+              <span class="text-[11px] font-semibold text-slate-400 uppercase">🌅 Morning Batch</span>
+              <p id="kpiMorningBatch" class="text-xl font-display font-bold text-white mt-1">--</p>
+            </div>
+            <div class="bg-slate-900/80 border border-gym-border rounded-xl p-4">
+              <span class="text-[11px] font-semibold text-slate-400 uppercase">🌆 Evening Batch</span>
+              <p id="kpiEveningBatch" class="text-xl font-display font-bold text-white mt-1">--</p>
+            </div>
+            <div class="bg-slate-900/80 border border-gym-border rounded-xl p-4">
+              <span class="text-[11px] font-semibold text-slate-400 uppercase">🏃 Cardio Members</span>
+              <p id="kpiCardioMembers" class="text-xl font-display font-bold text-white mt-1">--</p>
+            </div>
+            <div class="bg-slate-900/80 border border-gym-border rounded-xl p-4">
+              <span class="text-[11px] font-semibold text-slate-400 uppercase">🏋️ Strength Members</span>
+              <p id="kpiStrengthMembers" class="text-xl font-display font-bold text-white mt-1">--</p>
+            </div>
+          </div>
+
+          <!-- REVENUE METRICS ROW -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-gradient-to-br from-gym-card to-slate-900 border border-gym-orange/40 rounded-2xl p-5 shadow-lg shadow-gym-orangeGlow/20">
+              <span class="text-xs font-bold text-gym-orange uppercase tracking-wider">Total Revenue</span>
+              <p id="kpiTotalRevenue" class="text-3xl font-display font-bold text-white mt-1">₹0</p>
+              <p class="text-[11px] text-slate-400 mt-1">Lifetime Collected Subscriptions & Cardio</p>
+            </div>
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Subscription Revenue</span>
+              <p id="kpiSubRevenue" class="text-2xl font-display font-bold text-white mt-1">₹0</p>
+              <p class="text-[11px] text-slate-400 mt-1">Base Plan Fees (1M, 3M, 6M, 1Y)</p>
+            </div>
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Cardio Revenue</span>
+              <p id="kpiCardioRevenue" class="text-2xl font-display font-bold text-cyan-400 mt-1">₹0</p>
+              <p class="text-[11px] text-slate-400 mt-1">₹500 Add-on Cardio Receipts</p>
+            </div>
+          </div>
+
+          <!-- CHARTS & RECENT STREAM -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left 2 Cols: Charts -->
+            <div class="lg:col-span-2 bg-gym-card border border-gym-border rounded-2xl p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h3 class="font-display font-bold text-lg uppercase text-white">Subscription & Training Breakdown</h3>
+                  <p class="text-xs text-slate-400">Distribution of gym members across plans and batches</p>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div class="h-64 relative flex items-center justify-center">
+                  <canvas id="chartPlans"></canvas>
+                </div>
+                <div class="h-64 relative flex items-center justify-center">
+                  <canvas id="chartBatches"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right 1 Col: Recent Admissions -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-6 flex flex-col">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-display font-bold text-lg uppercase text-white">Recent Admissions</h3>
+                <button onclick="navigateTo('members')" class="text-xs text-gym-orange hover:underline font-semibold">View All</button>
+              </div>
+              <div id="recentAdmissionsList" class="space-y-3 flex-1 overflow-y-auto max-h-80">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- RECENT PAYMENTS TABLE -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="font-display font-bold text-lg uppercase text-white">Recent Payment Transactions</h3>
+                <p class="text-xs text-slate-400">Real-time payments received for memberships & cardio</p>
+              </div>
+              <button onclick="navigateTo('payments')" class="text-xs text-gym-orange hover:underline font-semibold">View Full History</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-900/60 uppercase font-bold text-slate-400 border-b border-gym-border">
+                  <tr>
+                    <th class="p-3">Receipt</th>
+                    <th class="p-3">Member</th>
+                    <th class="p-3">Plan</th>
+                    <th class="p-3">Amount</th>
+                    <th class="p-3">Method</th>
+                    <th class="p-3">Status</th>
+                    <th class="p-3">Date</th>
+                  </tr>
+                </thead>
+                <tbody id="recentPaymentsTableBody" class="divide-y divide-gym-border/40 text-slate-300">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= NEW ADMISSION SECTION ================= -->
+        <section id="viewAdmissions" class="hidden max-w-4xl mx-auto space-y-6">
+          <div class="bg-gym-card border border-gym-border rounded-2xl p-6 sm:p-8">
+            <div class="mb-6 pb-4 border-b border-gym-border">
+              <h3 class="font-display font-bold text-2xl uppercase text-white">New Member Admission</h3>
+              <p class="text-xs text-slate-400">Enroll an athlete into PowerFitnessKurnool. Price & expiry calculate automatically.</p>
+            </div>
+
+            <form id="admissionForm" onsubmit="handleAdmissionSubmit(event)" class="space-y-6">
+              <!-- Member Photo: Camera Photo Capture Component -->
+              <div class="p-5 rounded-2xl bg-slate-900/90 border border-gym-border space-y-3">
+                <div class="flex items-center justify-between">
+                  <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-gym-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span>Member Photograph *</span>
+                  </label>
+                  <span id="cameraStatusBadge" class="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono">Camera Ready</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center gap-5">
+                  <!-- Video / Photo Container -->
+                  <div class="relative w-44 h-44 rounded-2xl overflow-hidden border-2 border-gym-orange/60 bg-black flex items-center justify-center shadow-lg shadow-gym-orangeGlow/20 flex-shrink-0">
+                    <video id="admissionCameraVideo" autoplay playsinline class="hidden w-full h-full object-cover"></video>
+                    <img id="admissionPhotoPreview" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400" alt="Member Photo" class="w-full h-full object-cover">
+                    <canvas id="admissionCameraCanvas" class="hidden"></canvas>
+                    <div id="liveCameraIndicator" class="hidden absolute top-2 left-2 bg-red-600 text-white text-[9px] font-bold uppercase px-1.5 py-0.5 rounded animate-pulse">
+                      ● LIVE
+                    </div>
+                  </div>
+
+                  <!-- Controls & Fallback -->
+                  <div class="space-y-3 flex-1 w-full">
+                    <!-- Action Buttons -->
+                    <div class="flex flex-wrap items-center gap-2">
+                      <button type="button" id="btnOpenCamera" onclick="openMemberCamera()" class="bg-gym-orange hover:bg-gym-orangeHover text-white text-xs font-bold uppercase px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-md shadow-gym-orangeGlow transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        <span>Open Camera</span>
+                      </button>
+
+                      <button type="button" id="btnCapturePhoto" onclick="captureMemberPhoto()" class="hidden bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-md transition">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></svg>
+                        <span>📷 Capture Photo</span>
+                      </button>
+
+                      <button type="button" id="btnRetakePhoto" onclick="retakeMemberPhoto()" class="hidden bg-slate-800 hover:bg-slate-700 text-slate-300 border border-gym-border text-xs font-bold uppercase px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span>Retake</span>
+                      </button>
+
+                      <button type="button" id="btnUsePhoto" onclick="confirmMemberPhoto()" class="hidden bg-gym-emerald hover:bg-emerald-600 text-white text-xs font-bold uppercase px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-md shadow-gym-emerald/30 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Use Photo</span>
+                      </button>
+                    </div>
+
+                    <!-- Fallback: Device Image File Picker -->
+                    <div class="pt-2 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center gap-2 text-xs">
+                      <span class="text-slate-400 text-[11px]">No camera? Upload photo from device:</span>
+                      <label class="cursor-pointer inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-gym-border px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                        <svg class="w-3.5 h-3.5 text-gym-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        <span>Choose File</span>
+                        <input type="file" id="memberPhotoFileInput" accept="image/*" class="hidden" onchange="handleMemberFileSelect(event)">
+                      </label>
+                    </div>
+
+                    <!-- Status Message -->
+                    <div id="cameraStatusMsg" class="text-[11px] text-slate-400 font-medium">Click "Open Camera" to take live photo of athlete.</div>
+                    <input type="hidden" id="admissionPhotoUrl" value="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Name & Phone -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Full Name *</label>
+                  <input type="text" id="admissionFullName" required placeholder="e.g. Ramesh Reddy" class="w-full bg-slate-900 border border-gym-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gym-orange">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Phone Number (10 Digits) *</label>
+                  <input type="tel" id="admissionPhone" required pattern="[0-9]{10}" placeholder="e.g. 9876543210" class="w-full bg-slate-900 border border-gym-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gym-orange">
+                </div>
+              </div>
+
+              <!-- Admission Date, Category, Batch -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Admission Date</label>
+                  <input type="date" id="admissionDate" class="w-full bg-slate-900 border border-gym-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gym-orange">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Training Category *</label>
+                  <select id="admissionCategory" class="w-full bg-slate-900 border border-gym-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gym-orange">
+                    <option value="Strength Training">Strength Training</option>
+                    <option value="Cardio">Cardio</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Batch *</label>
+                  <select id="admissionBatch" class="w-full bg-slate-900 border border-gym-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gym-orange">
+                    <option value="Morning Batch">Morning Batch (05:30 AM - 10:30 AM)</option>
+                    <option value="Evening Batch">Evening Batch (04:30 PM - 09:30 PM)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Subscription Plan & Cardio Option -->
+              <div class="p-5 rounded-xl bg-slate-900/90 border border-gym-border space-y-4">
+                <div>
+                  <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Select Subscription Plan *</label>
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <label class="cursor-pointer">
+                      <input type="radio" name="subPlan" value="1 Month" checked onchange="recalculateAdmissionFee()" class="peer sr-only">
+                      <div class="p-3 rounded-xl border border-gym-border bg-slate-800 peer-checked:border-gym-orange peer-checked:bg-gym-orange/10 transition text-center">
+                        <span class="block text-xs font-bold text-white">1 Month</span>
+                        <span class="block text-sm font-display font-bold text-gym-orange">₹800</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="subPlan" value="3 Months" onchange="recalculateAdmissionFee()" class="peer sr-only">
+                      <div class="p-3 rounded-xl border border-gym-border bg-slate-800 peer-checked:border-gym-orange peer-checked:bg-gym-orange/10 transition text-center">
+                        <span class="block text-xs font-bold text-white">3 Months</span>
+                        <span class="block text-sm font-display font-bold text-gym-orange">₹1,800</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="subPlan" value="6 Months" onchange="recalculateAdmissionFee()" class="peer sr-only">
+                      <div class="p-3 rounded-xl border border-gym-border bg-slate-800 peer-checked:border-gym-orange peer-checked:bg-gym-orange/10 transition text-center">
+                        <span class="block text-xs font-bold text-white">6 Months</span>
+                        <span class="block text-sm font-display font-bold text-gym-orange">₹3,500</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="subPlan" value="1 Year" onchange="recalculateAdmissionFee()" class="peer sr-only">
+                      <div class="p-3 rounded-xl border border-gym-border bg-slate-800 peer-checked:border-gym-orange peer-checked:bg-gym-orange/10 transition text-center">
+                        <span class="block text-xs font-bold text-white">1 Year</span>
+                        <span class="block text-sm font-display font-bold text-gym-orange">₹6,800</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Cardio Add-on Checkbox -->
+                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/80 border border-gym-border">
+                  <div class="flex items-center gap-3">
+                    <input type="checkbox" id="admissionCardioOption" onchange="recalculateAdmissionFee()" class="w-5 h-5 text-gym-orange rounded bg-slate-900 border-gym-border focus:ring-gym-orange">
+                    <div>
+                      <span class="text-xs font-bold text-white block">Add Cardio Access (+ ₹500 Extra)</span>
+                      <span class="text-[11px] text-slate-400">Unlimited access to treadmill, cross-trainer, stationary cycle & rowing</span>
+                    </div>
+                  </div>
+                  <span class="text-xs font-bold text-cyan-400">+ ₹500</span>
+                </div>
+
+                <!-- Dynamic Calculation Summary Box -->
+                <div class="p-4 rounded-xl bg-gradient-to-r from-slate-950 to-slate-900 border border-gym-border flex items-center justify-between">
+                  <div>
+                    <span class="text-xs text-slate-400 block font-medium">Automatic Total Amount</span>
+                    <span id="admissionCalculationBreakdown" class="text-[11px] text-slate-500">Plan: ₹800 + Cardio: ₹0</span>
+                  </div>
+                  <div class="text-right">
+                    <span id="admissionFinalAmount" class="font-display font-bold text-3xl text-gym-orange">₹800</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment Details -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Payment Method *</label>
+                  <select id="admissionPaymentMethod" class="w-full bg-slate-900 border border-gym-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gym-orange">
+                    <option value="UPI">UPI (Google Pay / PhonePe / Paytm)</option>
+                    <option value="Cash">Cash at Front Desk</option>
+                    <option value="Other">Other / Card</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Payment Status *</label>
+                  <select id="admissionPaymentStatus" class="w-full bg-slate-900 border border-gym-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gym-orange">
+                    <option value="Paid">Paid (Confirmed)</option>
+                    <option value="Pending">Pending Verification</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Transaction Ref / UTR</label>
+                  <input type="text" id="admissionTxnRef" placeholder="e.g. UPI123456789" class="w-full bg-slate-900 border border-gym-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gym-orange">
+                </div>
+              </div>
+
+              <!-- Notes -->
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Admission Notes</label>
+                <textarea id="admissionNotes" rows="2" placeholder="Athlete fitness goals, medical history, or trainer notes..." class="w-full bg-slate-900 border border-gym-border rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-gym-orange"></textarea>
+              </div>
+
+              <!-- Submit -->
+              <button type="submit" class="w-full bg-gradient-to-r from-gym-orange to-red-600 hover:from-gym-orangeHover hover:to-red-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-gym-orangeGlow transition-all duration-200 flex items-center justify-center gap-2">
+                <span>Complete Admission & Generate Membership</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </button>
+            </form>
+          </div>
+        </section>
+
+
+        <!-- ================= MEMBERS MANAGEMENT ================= -->
+        <section id="viewMembers" class="hidden space-y-6">
+          <!-- Search & Filter Controls -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row gap-3 items-center justify-between">
+            <div class="relative w-full md:w-80">
+              <input type="text" id="memberSearchInput" oninput="debounceMemberSearch()" placeholder="Search by Name, Phone, or PFK ID..." class="w-full bg-slate-900 border border-gym-border rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange">
+              <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+
+            <div class="flex items-center gap-2 flex-wrap w-full md:w-auto">
+              <!-- Batch Filter -->
+              <select id="memberBatchFilter" onchange="loadMembers()" class="bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-gym-orange">
+                <option value="All">All Batches</option>
+                <option value="Morning Batch">Morning Batch</option>
+                <option value="Evening Batch">Evening Batch</option>
+              </select>
+
+              <!-- Category Filter -->
+              <select id="memberCategoryFilter" onchange="loadMembers()" class="bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-gym-orange">
+                <option value="All">All Categories</option>
+                <option value="Cardio">Cardio</option>
+                <option value="Strength">Strength Training</option>
+              </select>
+
+              <!-- Status Filter -->
+              <select id="memberStatusFilter" onchange="loadMembers()" class="bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-gym-orange">
+                <option value="All">All Statuses</option>
+                <option value="ACTIVE">Active</option>
+                <option value="EXPIRING_SOON">Expiring Soon</option>
+                <option value="EXPIRED">Expired</option>
+              </select>
+
+              <button onclick="navigateTo('admissions')" class="bg-gym-orange hover:bg-gym-orangeHover text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-md shadow-gym-orangeGlow transition">
+                <span>+ Add</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Members Grid / Table -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-900/80 uppercase font-bold text-slate-400 border-b border-gym-border">
+                  <tr>
+                    <th class="p-3.5">Athlete</th>
+                    <th class="p-3.5">PFK Code</th>
+                    <th class="p-3.5">Phone</th>
+                    <th class="p-3.5">Plan</th>
+                    <th class="p-3.5">Category & Batch</th>
+                    <th class="p-3.5">Expiry & Remaining</th>
+                    <th class="p-3.5">Status</th>
+                    <th class="p-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="membersTableBody" class="divide-y divide-gym-border/50 text-slate-300">
+                  <!-- Loaded via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= RENEWAL MANAGEMENT ================= -->
+        <section id="viewRenewals" class="hidden space-y-6">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 class="font-display font-bold text-2xl uppercase text-white">Subscription Renewal Management</h3>
+              <p class="text-xs text-slate-400">Track active durations, expiring memberships, and renew seamlessly.</p>
+            </div>
+
+            <!-- Tabs: All / Active / Expiring Soon / Expired -->
+            <div class="flex bg-slate-900 rounded-xl p-1 border border-gym-border text-xs font-bold uppercase">
+              <button onclick="filterRenewals('All')" id="renewalTabAll" class="px-3 py-1.5 rounded-lg bg-gym-orange text-white">All</button>
+              <button onclick="filterRenewals('ACTIVE')" id="renewalTabActive" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">Active</button>
+              <button onclick="filterRenewals('EXPIRING_SOON')" id="renewalTabExpiring" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">Expiring Soon</button>
+              <button onclick="filterRenewals('EXPIRED')" id="renewalTabExpired" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">Expired</button>
+            </div>
+          </div>
+
+          <!-- Renewals Table -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-900/80 uppercase font-bold text-slate-400 border-b border-gym-border">
+                  <tr>
+                    <th class="p-3.5">Member</th>
+                    <th class="p-3.5">Phone</th>
+                    <th class="p-3.5">Current Plan</th>
+                    <th class="p-3.5">Expiry Date</th>
+                    <th class="p-3.5">Days Remaining</th>
+                    <th class="p-3.5">Renewal Status</th>
+                    <th class="p-3.5 text-right">Quick Action</th>
+                  </tr>
+                </thead>
+                <tbody id="renewalsTableBody" class="divide-y divide-gym-border/50 text-slate-300">
+                  <!-- Loaded via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= PAYMENTS & FINANCIALS ================= -->
+        <section id="viewPayments" class="hidden space-y-6">
+
+          <!-- ================= 1. DAILY COLLECTION DASHBOARD ================= -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl p-5 shadow-xl space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gym-border/60 pb-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xl">📊</span>
+                  <h4 class="font-display font-bold text-xl uppercase text-white tracking-wide">Daily Collection</h4>
+                  <span class="px-2 py-0.5 rounded bg-gym-orange/10 border border-gym-orange/30 text-gym-orange text-[11px] font-bold uppercase">Real-Time Batch Ledger</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Separate morning & evening batch payment tracking for memberships and supplements</p>
+              </div>
+
+              <!-- Date Picker Control -->
+              <div class="flex items-center gap-2 bg-slate-900/90 border border-gym-border rounded-xl p-1.5 shadow-inner">
+                <label for="dailyCollectionDate" class="text-xs font-bold text-slate-300 flex items-center gap-1.5 pl-2">
+                  <span>📅</span>
+                  <span class="uppercase tracking-wider">Date:</span>
+                </label>
+                <input type="date" id="dailyCollectionDate" onchange="loadDailyCollection()" class="bg-slate-800 border border-gym-border/80 rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-gym-orange transition">
+                <button type="button" onclick="setDailyCollectionToday()" class="bg-gym-orange hover:bg-orange-600 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs uppercase tracking-wider transition shadow-sm">
+                  Today
+                </button>
+              </div>
+            </div>
+
+            <!-- Three Main Batch Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <!-- Morning Batch Card -->
+              <div class="bg-gradient-to-br from-amber-500/10 via-slate-900 to-slate-900 border border-amber-500/30 rounded-xl p-4 relative overflow-hidden group hover:border-amber-500/50 transition">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="text-base">🌅</span> MORNING BATCH
+                  </span>
+                  <span class="text-[10px] text-amber-400/80 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full font-mono font-semibold" id="dailyMorningCount">0 txns</span>
+                </div>
+                <p id="dailyMorningTotal" class="text-3xl font-display font-extrabold text-white mt-2 tracking-tight">₹0</p>
+                <div class="mt-3 pt-2 border-t border-gym-border/40 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                  <span>Mem: <strong class="text-slate-200" id="dailyMorningMemPreview">₹0</strong></span>
+                  <span>Supp: <strong class="text-slate-200" id="dailyMorningSuppPreview">₹0</strong></span>
+                </div>
+              </div>
+
+              <!-- Evening Batch Card -->
+              <div class="bg-gradient-to-br from-indigo-500/10 via-slate-900 to-slate-900 border border-indigo-500/30 rounded-xl p-4 relative overflow-hidden group hover:border-indigo-500/50 transition">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="text-base">🌆</span> EVENING BATCH
+                  </span>
+                  <span class="text-[10px] text-indigo-300/80 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full font-mono font-semibold" id="dailyEveningCount">0 txns</span>
+                </div>
+                <p id="dailyEveningTotal" class="text-3xl font-display font-extrabold text-white mt-2 tracking-tight">₹0</p>
+                <div class="mt-3 pt-2 border-t border-gym-border/40 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                  <span>Mem: <strong class="text-slate-200" id="dailyEveningMemPreview">₹0</strong></span>
+                  <span>Supp: <strong class="text-slate-200" id="dailyEveningSuppPreview">₹0</strong></span>
+                </div>
+              </div>
+
+              <!-- Grand Total Card -->
+              <div class="bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-900 border border-emerald-500/30 rounded-xl p-4 relative overflow-hidden group hover:border-emerald-500/50 transition">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="text-base">💰</span> TOTAL COLLECTION
+                  </span>
+                  <span class="text-[10px] text-emerald-400/80 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono font-semibold" id="dailyGrandTotalDate">Today</span>
+                </div>
+                <p id="dailyGrandTotal" class="text-3xl font-display font-extrabold text-emerald-400 mt-2 tracking-tight">₹0</p>
+                <div class="mt-3 pt-2 border-t border-gym-border/40 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                  <span>Morning + Evening</span>
+                  <span class="text-slate-300 font-semibold" id="dailyGrandCount">0 Total Verified</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Collection Breakdown Section (Details) -->
+            <div class="bg-slate-900/60 border border-gym-border/70 rounded-xl p-4">
+              <div class="flex items-center justify-between cursor-pointer select-none" onclick="toggleDailyBreakdown()">
+                <div class="flex items-center gap-2">
+                  <span class="text-gym-orange text-xs">📋</span>
+                  <h5 class="text-xs font-bold uppercase tracking-wider text-slate-200">
+                    Collection Breakdown &bull; <span id="breakdownDateLabel" class="text-gym-orange font-mono">--</span>
+                  </h5>
+                </div>
+                <button type="button" class="text-xs text-slate-400 hover:text-white flex items-center gap-1">
+                  <span id="breakdownToggleText">Hide Details</span>
+                  <svg id="breakdownToggleIcon" class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+              </div>
+
+              <div id="dailyBreakdownContent" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-3 border-t border-gym-border/40 text-xs">
+                <!-- Morning Breakdown -->
+                <div class="space-y-2 bg-slate-950/40 p-3 rounded-lg border border-gym-border/50">
+                  <div class="font-bold text-amber-400 uppercase flex items-center justify-between pb-1 border-b border-gym-border/40">
+                    <span>🌅 Morning Batch</span>
+                    <span id="breakdownMorningSum" class="font-mono text-white text-sm">₹0</span>
+                  </div>
+                  <div class="flex justify-between items-center text-slate-300 py-1">
+                    <span class="flex items-center gap-1 text-slate-400"><span>💳</span> Membership Payments:</span>
+                    <span id="breakdownMorningMem" class="font-mono font-semibold text-white">₹0</span>
+                  </div>
+                  <div class="flex justify-between items-center text-slate-300 py-1">
+                    <span class="flex items-center gap-1 text-slate-400"><span>📦</span> Supplement Payments:</span>
+                    <span id="breakdownMorningSupp" class="font-mono font-semibold text-white">₹0</span>
+                  </div>
+                </div>
+
+                <!-- Evening Breakdown -->
+                <div class="space-y-2 bg-slate-950/40 p-3 rounded-lg border border-gym-border/50">
+                  <div class="font-bold text-indigo-300 uppercase flex items-center justify-between pb-1 border-b border-gym-border/40">
+                    <span>🌆 Evening Batch</span>
+                    <span id="breakdownEveningSum" class="font-mono text-white text-sm">₹0</span>
+                  </div>
+                  <div class="flex justify-between items-center text-slate-300 py-1">
+                    <span class="flex items-center gap-1 text-slate-400"><span>💳</span> Membership Payments:</span>
+                    <span id="breakdownEveningMem" class="font-mono font-semibold text-white">₹0</span>
+                  </div>
+                  <div class="flex justify-between items-center text-slate-300 py-1">
+                    <span class="flex items-center gap-1 text-slate-400"><span>📦</span> Supplement Payments:</span>
+                    <span id="breakdownEveningSupp" class="font-mono font-semibold text-white">₹0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ================= 2. ALL TRANSACTION RECORDS ================= -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 class="font-display font-bold text-2xl uppercase text-white">Payment Records & Financials</h3>
+              <p class="text-xs text-slate-400">Complete transaction history for memberships, gym supplements, and cardio fees</p>
+            </div>
+
+            <!-- Payment Filters & Search -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <div class="relative">
+                <input type="text" id="paymentSearchInput" oninput="debouncePaymentSearch()" placeholder="Search member, ID, order, product, UTR..." class="bg-slate-900 border border-gym-border rounded-xl pl-8 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange w-64">
+                <svg class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
+
+              <select id="paymentTypeFilter" onchange="loadPayments()" class="bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-gym-orange font-semibold">
+                <option value="All">All Payments</option>
+                <option value="MEMBERSHIP">Membership Payments</option>
+                <option value="SUPPLEMENT">Supplement Payments</option>
+              </select>
+
+              <select id="paymentMethodFilter" onchange="loadPayments()" class="bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-gym-orange">
+                <option value="All">All Methods</option>
+                <option value="UPI">UPI</option>
+                <option value="Cash">Cash</option>
+                <option value="Other">Other</option>
+              </select>
+
+              <select id="paymentStatusFilter" onchange="loadPayments()" class="bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-gym-orange">
+                <option value="All">All Statuses</option>
+                <option value="Paid">Paid</option>
+                <option value="Pending">Pending</option>
+                <option value="Failed">Failed</option>
+              </select>
+
+              <button onclick="exportPaymentsCsv()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-gym-border px-3.5 py-2 rounded-xl text-xs font-bold uppercase flex items-center gap-1.5 transition">
+                <svg class="w-4 h-4 text-gym-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span>Export CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Summary Strip -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div class="bg-gym-card border border-gym-border rounded-xl p-4">
+              <span class="text-[11px] text-slate-400 uppercase font-semibold">Total Revenue Collected</span>
+              <p id="paymentsTotalRev" class="text-2xl font-display font-bold text-gym-orange mt-1">₹0</p>
+            </div>
+            <div class="bg-gym-card border border-gym-border rounded-xl p-4">
+              <span class="text-[11px] text-slate-400 uppercase font-semibold">Subscription Share</span>
+              <p id="paymentsSubRev" class="text-2xl font-display font-bold text-white mt-1">₹0</p>
+            </div>
+            <div class="bg-gym-card border border-gym-border rounded-xl p-4">
+              <span class="text-[11px] text-slate-400 uppercase font-semibold">Cardio Share</span>
+              <p id="paymentsCardioRev" class="text-2xl font-display font-bold text-cyan-400 mt-1">₹0</p>
+            </div>
+            <div class="bg-gym-card border border-gym-border rounded-xl p-4">
+              <span class="text-[11px] text-slate-400 uppercase font-semibold">Supplement Store</span>
+              <p id="paymentsSupplementRev" class="text-2xl font-display font-bold text-amber-400 mt-1">₹0</p>
+            </div>
+          </div>
+
+          <!-- Payments Table -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-900/80 uppercase font-bold text-slate-400 border-b border-gym-border">
+                  <tr>
+                    <th class="p-3.5">Payment ID</th>
+                    <th class="p-3.5">Type</th>
+                    <th class="p-3.5">Batch</th>
+                    <th class="p-3.5">Member / Customer</th>
+                    <th class="p-3.5">Payment Details</th>
+                    <th class="p-3.5">Total Amount</th>
+                    <th class="p-3.5">Date</th>
+                    <th class="p-3.5">Method & UTR</th>
+                    <th class="p-3.5">Status</th>
+                    <th class="p-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="paymentsTableBody" class="divide-y divide-gym-border/50 text-slate-300">
+                  <!-- Loaded via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ================= 3. DAILY COLLECTION HISTORY ================= -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl overflow-hidden shadow-xl">
+            <div class="p-4 border-b border-gym-border flex items-center justify-between">
+              <div>
+                <h4 class="font-display font-bold text-lg uppercase text-white tracking-wide flex items-center gap-2">
+                  <span>📅</span> Daily Collection History
+                </h4>
+                <p class="text-xs text-slate-400">Audited daily records comparing Morning vs Evening batch totals</p>
+              </div>
+              <button onclick="loadDailyCollection()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-gym-border px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition">
+                <svg class="w-3.5 h-3.5 text-gym-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>Refresh History</span>
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-900/80 uppercase font-bold text-slate-400 border-b border-gym-border">
+                  <tr>
+                    <th class="p-3.5">Date</th>
+                    <th class="p-3.5 text-amber-400">🌅 Morning Batch</th>
+                    <th class="p-3.5 text-indigo-300">🌆 Evening Batch</th>
+                    <th class="p-3.5 text-emerald-400 font-extrabold">💰 Total Collection</th>
+                    <th class="p-3.5 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dailyHistoryTableBody" class="divide-y divide-gym-border/50 text-slate-300">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= SUPPLEMENTS SECTION (ADMIN & USER) ================= -->
+        <section id="viewSupplements" class="hidden space-y-6">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 class="font-display font-bold text-2xl uppercase text-white">Gym Supplements & Nutrition Store</h3>
+              <p class="text-xs text-slate-400">Premium Whey Proteins, Creatine, Pre-Workouts & Micronutrients at gym desk prices</p>
+            </div>
+
+            <div class="flex items-center gap-2 flex-wrap">
+              <select id="supplementCategoryFilter" onchange="loadSupplements()" class="bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-gym-orange">
+                <option value="All">All Categories</option>
+                <option value="Protein">Protein</option>
+                <option value="Creatine">Creatine</option>
+                <option value="Pre-Workout">Pre-Workout</option>
+                <option value="Mass Gainer">Mass Gainer</option>
+                <option value="Vitamins">Vitamins</option>
+                <option value="Electrolytes">Electrolytes</option>
+                <option value="Other">Other</option>
+              </select>
+
+              <div id="adminAddSupplementBtn" class="hidden">
+                <button onclick="openSupplementModal()" class="bg-gym-orange hover:bg-gym-orangeHover text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-gym-orangeGlow transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                  <span>+ Add Supplement</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Supplements Grid -->
+          <div id="supplementsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <!-- Rendered via JS -->
+          </div>
+        </section>
+
+        <!-- ================= SUPPLEMENT ORDERS (ADMIN) ================= -->
+        <section id="viewSupplementOrders" class="hidden space-y-6">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 class="font-display font-bold text-2xl uppercase text-white">Supplement Orders Management</h3>
+              <p class="text-xs text-slate-400">Track member orders, verify UPI/cash payments, and manage front-desk hand-over collections</p>
+            </div>
+
+            <!-- Filter Status Dropdown -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <select id="orderStatusFilter" onchange="loadSupplementOrders()" class="bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-gym-orange">
+                <option value="ALL">All Statuses</option>
+                <option value="PAYMENT_PENDING">Payment Pending</option>
+                <option value="PAID">Paid</option>
+                <option value="READY_FOR_COLLECTION">Ready for Collection</option>
+                <option value="COLLECTED">Collected</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+
+              <div class="relative">
+                <input type="text" id="orderSearchInput" oninput="debounceOrderSearch()" placeholder="Search member, order #, product..." class="bg-slate-900 border border-gym-border rounded-xl pl-8 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange w-60">
+                <svg class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Orders Table Container -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-900/90 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-gym-border">
+                  <tr>
+                    <th class="p-4">Order ID</th>
+                    <th class="p-4">Member</th>
+                    <th class="p-4">Supplement Product</th>
+                    <th class="p-4">Qty</th>
+                    <th class="p-4">Total Amount</th>
+                    <th class="p-4">Date</th>
+                    <th class="p-4">Payment</th>
+                    <th class="p-4">Order Status</th>
+                    <th class="p-4 text-center">Front Desk Action</th>
+                  </tr>
+                </thead>
+                <tbody id="supplementOrdersTableBody" class="divide-y divide-gym-border text-slate-300">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= SUPPLEMENT COLLECTION HISTORY (ADMIN) ================= -->
+        <section id="viewCollectionHistory" class="hidden space-y-6">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 class="font-display font-bold text-2xl uppercase text-white">Front Desk Collection History</h3>
+              <p class="text-xs text-slate-400">Permanent physical hand-over log with verified member photos taken at the front desk</p>
+            </div>
+
+            <button onclick="loadAdminCollectionHistory()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 px-3 py-2 rounded-xl text-xs font-bold uppercase flex items-center gap-1.5 border border-gym-border transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>Refresh Log</span>
+            </button>
+          </div>
+
+          <!-- Collection Cards Grid -->
+          <div id="adminCollectionGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Rendered via JS -->
+          </div>
+        </section>
+
+
+        <!-- ================= MY SUPPLEMENT ORDERS (USER) ================= -->
+        <section id="viewUserOrders" class="hidden space-y-6">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 class="font-display font-bold text-2xl uppercase text-white">My Supplement Orders</h3>
+              <p class="text-xs text-slate-400">Track your supplement purchases and collect them physically from the gym Front Desk</p>
+            </div>
+
+            <button onclick="navigateTo('supplements')" class="bg-gym-orange hover:bg-gym-orangeHover text-white px-4 py-2 rounded-xl text-xs font-bold uppercase flex items-center gap-1.5 shadow-md shadow-gym-orangeGlow transition">
+              <span>🛒 Browse Supplement Store</span>
+            </button>
+          </div>
+
+          <div id="userOrdersList" class="space-y-4">
+            <!-- Rendered via JS -->
+          </div>
+        </section>
+
+
+        <!-- ================= MY COLLECTION HISTORY (USER) ================= -->
+        <section id="viewUserCollectionHistory" class="hidden space-y-6">
+          <div>
+            <h3 class="font-display font-bold text-2xl uppercase text-white">My Collection Receipts</h3>
+            <p class="text-xs text-slate-400">Verified hand-over receipts and photos taken during your front desk collections</p>
+          </div>
+
+          <div id="userCollectionGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Rendered via JS -->
+          </div>
+        </section>
+
+
+        <!-- ================= UPI / QR CODE MANAGEMENT ================= -->
+        <section id="viewUpi" class="hidden max-w-2xl mx-auto space-y-6">
+          <div class="bg-gym-card border border-gym-border rounded-2xl p-6 sm:p-8 text-center">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gym-orange/10 text-gym-orange mb-3">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+            </div>
+            <h3 class="font-display font-bold text-2xl uppercase text-white">PowerFitness Kurnool UPI QR</h3>
+            <p class="text-xs text-slate-400 max-w-md mx-auto mt-1">Scan this QR code using Google Pay, PhonePe, Paytm, or BHIM to make membership and cardio fee payments.</p>
+
+            <!-- Rendered QR Box -->
+            <div id="adminQrCardWrapper" class="my-6 inline-block p-5 bg-white rounded-2xl shadow-2xl relative">
+              <div id="upiQrCodeContainer" class="flex items-center justify-center min-w-[200px] min-h-[200px]">
+                <img id="displayUpiQrImg" src="/api/upi/qr" alt="PowerFitnessKurnool UPI QR Code" class="w-48 h-48 object-contain rounded-lg block" onerror="handleAdminQrError(this)">
+                <div id="adminUpiQrErrorNotice" class="hidden p-4 text-center text-amber-500 bg-slate-900 rounded-xl border border-amber-500/30 text-xs font-semibold">
+                  ⚠️ UPI QR CODE UNAVAILABLE<br>
+                  <span class="text-slate-400 font-normal mt-1 block">Please contact PowerFitnessKurnool front desk.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-1 text-xs">
+              <p class="text-slate-400 font-medium">Gym UPI ID:</p>
+              <div class="inline-flex items-center gap-2 bg-slate-900 border border-gym-border px-4 py-2 rounded-xl">
+                <span id="displayUpiId" class="font-mono font-bold text-gym-orange text-sm">powerfitnesskurnool@okaxis</span>
+                <button onclick="copyUpiId()" class="text-slate-400 hover:text-white" title="Copy UPI ID">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                </button>
+              </div>
+              <p id="displayMerchantName" class="text-slate-300 font-semibold mt-2">PowerFitnessKurnool Gym</p>
+              <p id="displayUpiNotes" class="text-[11px] text-slate-500 max-w-sm mx-auto mt-1">Include your Phone Number or PFK ID in transaction remarks.</p>
+            </div>
+
+            <!-- Admin Edit UPI Settings Form -->
+            <div id="adminUpiConfigForm" class="hidden mt-8 pt-6 border-t border-gym-border text-left space-y-4">
+              <h4 class="font-display font-bold text-sm uppercase text-gym-orange">Gym Owner UPI Configuration</h4>
+              <div>
+                <label class="block text-xs font-bold text-slate-400 mb-1">Gym UPI QR Code Image (Upload / Change QR)</label>
+                <input type="file" id="editUpiQrFile" accept="image/*" onchange="previewAdminUpiQr(event)" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-slate-300 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gym-orange file:text-white hover:file:bg-gym-orangeHover cursor-pointer">
+                <div id="adminQrFilePreviewContainer" class="hidden mt-2 p-2 bg-slate-900/80 rounded-xl border border-gym-border/60 inline-flex items-center gap-3">
+                  <img id="adminQrFilePreviewImg" class="w-16 h-16 object-contain rounded-lg border border-gym-border" src="" alt="New QR Preview">
+                  <span class="text-[11px] text-gym-emerald font-semibold">New QR ready to save</span>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-400 mb-1">UPI ID *</label>
+                <input type="text" id="editUpiId" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-white">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-400 mb-1">Merchant Name</label>
+                <input type="text" id="editMerchantName" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-white">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-400 mb-1">Instructions / Note</label>
+                <input type="text" id="editUpiNotes" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-white">
+              </div>
+              <button onclick="saveUpiConfig()" id="saveUpiBtn" class="bg-gym-orange hover:bg-gym-orangeHover text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition flex items-center gap-2">
+                <span>Save UPI Details</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= REPORTS SECTION ================= -->
+        <section id="viewReports" class="hidden space-y-6">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 class="font-display font-bold text-2xl uppercase text-white">Gym Analytics & Business Reports</h3>
+              <p class="text-xs text-slate-400">High-level financial summaries, batch metrics, and CSV export tools</p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="downloadReport('revenue', 'pdf')" class="bg-gym-orange hover:bg-gym-orangeHover text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase flex items-center gap-1.5 shadow-md shadow-gym-orangeGlow transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>Download Revenue PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 OFFICIAL DOWNLOADABLE REPORT CARDS -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- 1. Members Report Card -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-gym-orange/50 transition">
+              <div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Members Report</span>
+                  <span class="w-8 h-8 rounded-lg bg-gym-orange/10 text-gym-orange flex items-center justify-center font-bold text-sm">📋</span>
+                </div>
+                <h4 class="font-display font-bold text-lg text-white mt-2">Athletes Roster</h4>
+                <p class="text-[11px] text-slate-400 mt-1">Full member records with plans, category, batch, cardio, and statuses.</p>
+              </div>
+              <div class="flex items-center gap-2 pt-2 border-t border-gym-border/60">
+                <button onclick="downloadReport('members', 'csv')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold uppercase py-2 px-2.5 rounded-xl border border-gym-border flex items-center justify-center gap-1 transition">
+                  <span>CSV</span>
+                </button>
+                <button onclick="downloadReport('members', 'pdf')" class="flex-1 bg-gym-orange hover:bg-gym-orangeHover text-white text-[11px] font-bold uppercase py-2 px-2.5 rounded-xl flex items-center justify-center gap-1 shadow-sm transition">
+                  <span>PDF</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. Payments Report Card -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-gym-emerald/50 transition">
+              <div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Payments Report</span>
+                  <span class="w-8 h-8 rounded-lg bg-gym-emerald/10 text-gym-emerald flex items-center justify-center font-bold text-sm">💳</span>
+                </div>
+                <h4 class="font-display font-bold text-lg text-white mt-2">Revenue & Audit</h4>
+                <p class="text-[11px] text-slate-400 mt-1">Receipts, base fees, cardio fees, methods, and total revenue calculations.</p>
+              </div>
+              <div class="flex items-center gap-2 pt-2 border-t border-gym-border/60">
+                <button onclick="downloadReport('payments', 'csv')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold uppercase py-2 px-2.5 rounded-xl border border-gym-border flex items-center justify-center gap-1 transition">
+                  <span>CSV</span>
+                </button>
+                <button onclick="downloadReport('payments', 'pdf')" class="flex-1 bg-gym-emerald hover:bg-emerald-600 text-white text-[11px] font-bold uppercase py-2 px-2.5 rounded-xl flex items-center justify-center gap-1 shadow-sm transition">
+                  <span>PDF</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 3. Subscriptions Report Card -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-gym-gold/50 transition">
+              <div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Subscriptions</span>
+                  <span class="w-8 h-8 rounded-lg bg-gym-gold/10 text-gym-gold flex items-center justify-center font-bold text-sm">⏳</span>
+                </div>
+                <h4 class="font-display font-bold text-lg text-white mt-2">Validity & Expiry</h4>
+                <p class="text-[11px] text-slate-400 mt-1">Expiry tracking, days remaining, active, expiring soon, and expired statuses.</p>
+              </div>
+              <div class="flex items-center gap-2 pt-2 border-t border-gym-border/60">
+                <button onclick="downloadReport('subscriptions', 'csv')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold uppercase py-2 px-2.5 rounded-xl border border-gym-border flex items-center justify-center gap-1 transition">
+                  <span>CSV</span>
+                </button>
+                <button onclick="downloadReport('subscriptions', 'pdf')" class="flex-1 bg-gym-gold hover:bg-amber-600 text-slate-900 text-[11px] font-bold uppercase py-2 px-2.5 rounded-xl flex items-center justify-center gap-1 shadow-sm transition">
+                  <span>PDF</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 4. Supplements Report Card -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-cyan-500/50 transition">
+              <div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Supplements</span>
+                  <span class="w-8 h-8 rounded-lg bg-cyan-900/30 text-cyan-400 flex items-center justify-center font-bold text-sm">💊</span>
+                </div>
+                <h4 class="font-display font-bold text-lg text-white mt-2">Store Inventory</h4>
+                <p class="text-[11px] text-slate-400 mt-1">Product list, stock availability, pricing, and category classifications.</p>
+              </div>
+              <div class="flex items-center gap-2 pt-2 border-t border-gym-border/60">
+                <button onclick="downloadReport('supplements', 'csv')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold uppercase py-2 px-2.5 rounded-xl border border-gym-border flex items-center justify-center gap-1 transition">
+                  <span>CSV</span>
+                </button>
+                <button onclick="downloadReport('supplements', 'pdf')" class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white text-[11px] font-bold uppercase py-2 px-2.5 rounded-xl flex items-center justify-center gap-1 shadow-sm transition">
+                  <span>PDF</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Big Metric Overview -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5">
+              <span class="text-xs text-slate-400 uppercase font-semibold">Total Admissions</span>
+              <p id="reportTotalMembers" class="text-3xl font-display font-bold text-white mt-1">--</p>
+            </div>
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5">
+              <span class="text-xs text-slate-400 uppercase font-semibold">Active Members</span>
+              <p id="reportActiveMembers" class="text-3xl font-display font-bold text-gym-emerald mt-1">--</p>
+            </div>
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5">
+              <span class="text-xs text-slate-400 uppercase font-semibold">Expired Members</span>
+              <p id="reportExpiredMembers" class="text-3xl font-display font-bold text-gym-crimson mt-1">--</p>
+            </div>
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5">
+              <span class="text-xs text-slate-400 uppercase font-semibold">Gross Revenue</span>
+              <p id="reportTotalRev" class="text-3xl font-display font-bold text-gym-orange mt-1">₹0</p>
+            </div>
+          </div>
+
+          <!-- Charts in Reports -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-6">
+              <h4 class="font-display font-bold text-lg uppercase text-white mb-4">Subscription Plan Popularity</h4>
+              <div class="h-64 relative flex items-center justify-center">
+                <canvas id="reportPlanChart"></canvas>
+              </div>
+            </div>
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-6">
+              <h4 class="font-display font-bold text-lg uppercase text-white mb-4">Payment Method Distribution</h4>
+              <div class="h-64 relative flex items-center justify-center">
+                <canvas id="reportMethodChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= USER DASHBOARD ================= -->
+        <section id="viewUserDashboard" class="hidden space-y-6">
+          <!-- Personalized Welcome Banner -->
+          <div class="bg-gradient-to-r from-gym-card via-slate-900 to-gym-card border border-gym-border rounded-2xl p-6 relative overflow-hidden">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+              <div class="flex items-center gap-5">
+                <img id="userDashPhoto" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400" class="w-20 h-20 rounded-2xl object-cover border-2 border-gym-orange shadow-lg shadow-gym-orangeGlow/30">
+                <div>
+                  <h3 id="userDashWelcomeName" class="font-display font-bold text-3xl uppercase text-white">Welcome, Athlete 💪</h3>
+                  <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                    <span id="userDashMemberCode" class="bg-slate-800 text-gym-orange text-xs font-mono font-bold px-2.5 py-1 rounded-md border border-gym-border">PFK-1001</span>
+                    <span id="userDashStatusBadge" class="bg-gym-emerald/20 text-gym-emerald border border-gym-emerald/30 text-xs font-bold px-2.5 py-1 rounded-md">ACTIVE</span>
+                    <span id="userDashCardioBadge" class="hidden bg-cyan-900/30 text-cyan-400 border border-cyan-800/40 text-xs font-bold px-2.5 py-1 rounded-md">Cardio Pass Included</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Large Visual Subscription Countdown -->
+              <div class="bg-slate-950/80 border border-gym-border/80 rounded-2xl p-5 text-center min-w-[200px] shadow-2xl">
+                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Membership Countdown</span>
+                <span id="userDashCountdown" class="font-display font-bold text-4xl text-gym-orange block mt-1 tracking-tight">42 DAYS LEFT</span>
+                <span id="userDashExpiryDate" class="text-[11px] text-slate-400 block mt-1">Valid Until: 2026-10-15</span>
+              </div>
+            </div>
+
+            <!-- Progress Bar for Membership Duration -->
+            <div class="mt-6 pt-4 border-t border-gym-border/60">
+              <div class="flex items-center justify-between text-xs font-semibold text-slate-400 mb-2">
+                <span>Duration Completed: <span id="userDashProgressText">48 of 90 days</span></span>
+                <span id="userDashProgressPercent" class="text-gym-orange font-bold">53%</span>
+              </div>
+              <div class="w-full h-3 bg-slate-900 rounded-full overflow-hidden border border-gym-border/50">
+                <div id="userDashProgressBar" class="h-full bg-gradient-to-r from-gym-orange to-red-500 rounded-full transition-all duration-500" style="width: 53%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Plan Info Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-gym-card border border-gym-border rounded-xl p-4">
+              <span class="text-[11px] text-slate-400 uppercase font-semibold">Subscribed Plan</span>
+              <p id="userDashPlan" class="text-lg font-display font-bold text-white mt-1">3 Months</p>
+            </div>
+            <div class="bg-gym-card border border-gym-border rounded-xl p-4">
+              <span class="text-[11px] text-slate-400 uppercase font-semibold">Training Category</span>
+              <p id="userDashCategory" class="text-lg font-display font-bold text-white mt-1">Strength Training</p>
+            </div>
+            <div class="bg-gym-card border border-gym-border rounded-xl p-4">
+              <span class="text-[11px] text-slate-400 uppercase font-semibold">Assigned Batch</span>
+              <p id="userDashBatch" class="text-lg font-display font-bold text-white mt-1">Morning Batch</p>
+            </div>
+            <div class="bg-gym-card border border-gym-border rounded-xl p-4">
+              <span class="text-[11px] text-slate-400 uppercase font-semibold">Phone Number</span>
+              <p id="userDashPhone" class="text-lg font-display font-bold text-white mt-1">9876543210</p>
+            </div>
+          </div>
+
+          <!-- Quick Navigation to Calories & UPI -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div onclick="navigateTo('calories')" class="bg-gradient-to-br from-gym-card to-slate-900 border border-gym-border hover:border-gym-orange/60 rounded-2xl p-6 cursor-pointer transition shadow-lg group">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-xs font-bold text-gym-orange uppercase tracking-wider">Nutrition & Diet</span>
+                  <h4 class="font-display font-bold text-xl uppercase text-white mt-1 group-hover:text-gym-orange transition">Today's Calorie & Andhra Meal Tracker</h4>
+                  <p class="text-xs text-slate-400 mt-1">Log your Idli, Andhra Chicken, Gongura Pappu, Roti, and monitor protein targets.</p>
+                </div>
+                <span class="w-12 h-12 rounded-xl bg-gym-orange/10 text-gym-orange flex items-center justify-center font-bold text-2xl group-hover:scale-110 transition">🥗</span>
+              </div>
+            </div>
+
+            <div onclick="navigateTo('userPayments')" class="bg-gradient-to-br from-gym-card to-slate-900 border border-gym-border hover:border-cyan-500/60 rounded-2xl p-6 cursor-pointer transition shadow-lg group">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-xs font-bold text-cyan-400 uppercase tracking-wider">Payments & UPI</span>
+                  <h4 class="font-display font-bold text-xl uppercase text-white mt-1 group-hover:text-cyan-400 transition">Scan & Pay via Gym UPI</h4>
+                  <p class="text-xs text-slate-400 mt-1">Pay for upcoming renewals or cardio access directly via QR code.</p>
+                </div>
+                <span class="w-12 h-12 rounded-xl bg-cyan-900/20 text-cyan-400 flex items-center justify-center font-bold text-2xl group-hover:scale-110 transition">📱</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= USER PROFILE & GYM ID CARD ================= -->
+        <section id="viewUserProfile" class="hidden max-w-2xl mx-auto space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-display font-bold text-2xl uppercase text-white">My Profile & Membership</h3>
+              <p class="text-xs text-slate-400">View personal enrollment details and manage your account password</p>
+            </div>
+            <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-700 text-white border border-gym-border px-3.5 py-2 rounded-xl text-xs font-bold uppercase flex items-center gap-1.5 transition">
+              <svg class="w-4 h-4 text-gym-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              <span>Print Card</span>
+            </button>
+          </div>
+
+          <!-- Printable Digital Membership Card -->
+          <div id="gymIdCardElement" class="bg-gradient-to-b from-slate-900 via-gym-card to-slate-950 border-2 border-gym-orange/70 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+            <div class="flex items-center justify-between border-b border-gym-border pb-4 mb-6">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-gym-orange to-amber-500 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
+                </div>
+                <div>
+                  <h4 class="font-display font-bold text-lg uppercase text-white tracking-wide leading-none">PowerFitness</h4>
+                  <span class="text-[9px] font-bold text-gym-orange tracking-widest uppercase">Kurnool Member Card</span>
+                </div>
+              </div>
+              <span id="cardStatusBadge" class="bg-gym-emerald/20 text-gym-emerald text-[11px] font-bold px-2.5 py-1 rounded-md border border-gym-emerald/30">ACTIVE</span>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center gap-6">
+              <img id="cardPhoto" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400" class="w-28 h-28 rounded-2xl object-cover border-2 border-gym-border shadow-xl">
+              <div class="space-y-1.5 text-center sm:text-left flex-1">
+                <h4 id="cardFullName" class="font-display font-bold text-2xl text-white uppercase tracking-wide">Rahul Sharma</h4>
+                <p id="cardMemberCode" class="text-xs font-mono font-bold text-gym-orange">ID: PFK-1001</p>
+                <p id="cardPhone" class="text-xs text-slate-400">Phone: 9876543210</p>
+                <div class="pt-2 flex flex-wrap gap-2 justify-center sm:justify-start">
+                  <span id="cardPlan" class="bg-slate-800 text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded border border-gym-border">3 Months</span>
+                  <span id="cardBatch" class="bg-slate-800 text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded border border-gym-border">Morning Batch</span>
+                  <span id="cardCategory" class="bg-slate-800 text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded border border-gym-border">Strength</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-gym-border/60 flex items-center justify-between text-[11px]">
+              <div>
+                <span class="text-slate-500 block">Valid From: <span id="cardStartDate" class="text-slate-300 font-semibold">2026-07-15</span></span>
+                <span class="text-slate-500 block">Expires On: <span id="cardExpiryDate" class="text-gym-orange font-bold">2026-10-15</span></span>
+              </div>
+              <div class="text-right">
+                <span class="text-slate-500 block">Cardio Access:</span>
+                <span id="cardCardioStatus" class="font-bold text-slate-300">Not Included</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Personal Information & Membership Details (Read-Only for Member) -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl p-6 space-y-4 shadow-xl">
+            <div class="flex items-center justify-between border-b border-gym-border/60 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="text-base">📋</span>
+                <h4 class="font-display font-bold text-sm uppercase text-white tracking-wider">Member Details</h4>
+              </div>
+              <span class="text-[10px] text-slate-400 bg-slate-900 border border-gym-border px-2 py-0.5 rounded font-mono">Official Record</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div class="bg-slate-900/50 p-3.5 rounded-xl border border-gym-border/40">
+                <span class="text-slate-400 block text-[11px] uppercase font-semibold">Full Name</span>
+                <span id="memberProfileName" class="font-bold text-white text-sm mt-1 block">-</span>
+              </div>
+              <div class="bg-slate-900/50 p-3.5 rounded-xl border border-gym-border/40">
+                <span class="text-slate-400 block text-[11px] uppercase font-semibold">Member ID (Roll Number)</span>
+                <span id="memberProfileCode" class="font-bold text-gym-orange font-mono text-sm mt-1 block">-</span>
+              </div>
+              <div class="bg-slate-900/50 p-3.5 rounded-xl border border-gym-border/40">
+                <span class="text-slate-400 block text-[11px] uppercase font-semibold">Phone Number / Username</span>
+                <span id="memberProfilePhone" class="font-semibold text-slate-200 mt-1 block">-</span>
+              </div>
+              <div class="bg-slate-900/50 p-3.5 rounded-xl border border-gym-border/40">
+                <span class="text-slate-400 block text-[11px] uppercase font-semibold">Admission Date</span>
+                <span id="memberProfileAdmission" class="font-semibold text-slate-200 mt-1 block">-</span>
+              </div>
+              <div class="bg-slate-900/50 p-3.5 rounded-xl border border-gym-border/40">
+                <span class="text-slate-400 block text-[11px] uppercase font-semibold">Assigned Batch</span>
+                <span id="memberProfileBatch" class="font-semibold text-amber-400 mt-1 block">-</span>
+              </div>
+              <div class="bg-slate-900/50 p-3.5 rounded-xl border border-gym-border/40">
+                <span class="text-slate-400 block text-[11px] uppercase font-semibold">Current Plan & Status</span>
+                <span id="memberProfilePlanStatus" class="font-semibold text-emerald-400 mt-1 block">-</span>
+              </div>
+            </div>
+
+            <p class="text-[11px] text-slate-500 italic pt-1 flex items-center gap-1.5">
+              <span>ℹ️</span> Profile details and batch timings are managed directly by gym management. Contact front desk for updates.
+            </p>
+          </div>
+
+          <!-- CHANGE PASSWORD (Member) -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl p-6 space-y-4 shadow-xl">
+            <div class="border-b border-gym-border/60 pb-3">
+              <h4 class="font-display font-bold text-sm uppercase text-white tracking-wider flex items-center gap-2">
+                <span>🔒</span> Change Password
+              </h4>
+              <p class="text-[11px] text-slate-400 mt-0.5">Keep your account secure by using a strong password with at least 6 characters</p>
+            </div>
+
+            <!-- Feedback Alert -->
+            <div id="memberPasswordMsg" class="hidden p-3 rounded-xl text-xs font-semibold"></div>
+
+            <form onsubmit="updateMemberPassword(event)" class="space-y-4 text-xs">
+              <div>
+                <label class="block font-bold uppercase text-slate-400 mb-1">Current Password</label>
+                <input type="password" id="memberCurrentPassword" required placeholder="Enter your current password" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange transition">
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block font-bold uppercase text-slate-400 mb-1">New Password</label>
+                  <input type="password" id="memberNewPassword" required minlength="6" placeholder="Min 6 characters" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange transition">
+                </div>
+                <div>
+                  <label class="block font-bold uppercase text-slate-400 mb-1">Confirm New Password</label>
+                  <input type="password" id="memberConfirmPassword" required minlength="6" placeholder="Repeat new password" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange transition">
+                </div>
+              </div>
+
+              <div class="pt-2">
+                <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-gym-orange hover:bg-orange-600 text-slate-950 font-extrabold uppercase tracking-wider rounded-xl transition shadow-lg shadow-gym-orange/20 flex items-center justify-center gap-2">
+                  <span>Change Password</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+
+        <!-- ================= CALORIES & ANDHRA MEAL TRACKER ================= -->
+        <section id="viewCalories" class="hidden space-y-6">
+          <!-- Goal Selector Header -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl p-6">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-5 pb-4 border-b border-gym-border">
+              <div>
+                <h3 class="font-display font-bold text-2xl uppercase text-white">Daily Calorie & Macro Target</h3>
+                <p class="text-xs text-slate-400">Select your fitness goal. Daily calorie, protein, carbohydrate, and fat targets will be adjusted automatically.</p>
+              </div>
+
+              <!-- Active Goal Badge -->
+              <div class="bg-slate-900 border border-gym-orange/50 px-4 py-2 rounded-xl flex items-center gap-2">
+                <span class="text-xs text-slate-400">Current Goal:</span>
+                <span id="displayActiveGoal" class="text-xs font-bold text-gym-orange uppercase">Lean Bulking</span>
+              </div>
+            </div>
+
+            <!-- Goal Options Selector -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <button onclick="selectFitnessGoal('Weight Loss', 'CARDIO_WEIGHT_LOSS')" class="goal-btn p-3 rounded-xl border border-gym-border bg-slate-900 hover:border-gym-orange text-center transition">
+                <span class="block text-xl mb-1">🔥</span>
+                <span class="block text-xs font-bold text-white">Weight Loss</span>
+                <span class="block text-[10px] text-slate-400">1,750 kcal</span>
+              </button>
+
+              <button onclick="selectFitnessGoal('Weight Loss + Strength Training', 'CARDIO_WEIGHT_LOSS')" class="goal-btn p-3 rounded-xl border border-gym-border bg-slate-900 hover:border-gym-orange text-center transition">
+                <span class="block text-xl mb-1">⚡</span>
+                <span class="block text-xs font-bold text-white">Weight + Strength</span>
+                <span class="block text-[10px] text-slate-400">2,050 kcal</span>
+              </button>
+
+              <button onclick="selectFitnessGoal('Lean Bulking', 'STRENGTH_TRAINING')" class="goal-btn p-3 rounded-xl border border-gym-border bg-slate-900 hover:border-gym-orange text-center transition">
+                <span class="block text-xl mb-1">🥩</span>
+                <span class="block text-xs font-bold text-white">Lean Bulking</span>
+                <span class="block text-[10px] text-slate-400">2,500 kcal</span>
+              </button>
+
+              <button onclick="selectFitnessGoal('Bulking', 'STRENGTH_TRAINING')" class="goal-btn p-3 rounded-xl border border-gym-border bg-slate-900 hover:border-gym-orange text-center transition">
+                <span class="block text-xl mb-1">💪</span>
+                <span class="block text-xs font-bold text-white">Bulking</span>
+                <span class="block text-[10px] text-slate-400">2,800 kcal</span>
+              </button>
+
+              <button onclick="selectFitnessGoal('Dirty Bulking', 'STRENGTH_TRAINING')" class="goal-btn p-3 rounded-xl border border-gym-border bg-slate-900 hover:border-gym-orange text-center transition">
+                <span class="block text-xl mb-1">🦍</span>
+                <span class="block text-xs font-bold text-white">Dirty Bulking</span>
+                <span class="block text-[10px] text-slate-400">3,200 kcal</span>
+              </button>
+
+              <button onclick="selectFitnessGoal('Fat Cutting', 'STRENGTH_TRAINING')" class="goal-btn p-3 rounded-xl border border-gym-border bg-slate-900 hover:border-gym-orange text-center transition">
+                <span class="block text-xl mb-1">⚔️</span>
+                <span class="block text-xs font-bold text-white">Fat Cutting</span>
+                <span class="block text-[10px] text-slate-400">1,950 kcal</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- MACRONUTRIENT PROGRESS & REMAINING DASHBOARD -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl p-6 space-y-5">
+            <div class="flex items-center justify-between">
+              <h4 class="font-display font-bold text-lg uppercase text-white">Today's Nutrition Tracker</h4>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400">Date:</span>
+                <input type="date" id="trackerDateInput" onchange="loadTrackerData()" class="bg-slate-900 border border-gym-border rounded-lg px-2.5 py-1 text-xs text-white">
+              </div>
+            </div>
+
+            <!-- Progress Bars Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <!-- Calories -->
+              <div class="bg-slate-900/90 border border-gym-border rounded-xl p-4">
+                <div class="flex justify-between text-xs mb-1.5 font-bold">
+                  <span class="text-slate-400">Calories</span>
+                  <span id="calText" class="text-gym-orange">0 / 2500 kcal</span>
+                </div>
+                <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div id="calProgress" class="h-full bg-gym-orange transition-all duration-300" style="width: 0%;"></div>
+                </div>
+                <span id="calRemaining" class="text-[11px] text-slate-400 block mt-2">Remaining: 2500 kcal</span>
+              </div>
+
+              <!-- Protein -->
+              <div class="bg-slate-900/90 border border-gym-border rounded-xl p-4">
+                <div class="flex justify-between text-xs mb-1.5 font-bold">
+                  <span class="text-slate-400">Protein</span>
+                  <span id="proteinText" class="text-gym-emerald">0 / 160g</span>
+                </div>
+                <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div id="proteinProgress" class="h-full bg-gym-emerald transition-all duration-300" style="width: 0%;"></div>
+                </div>
+                <span id="proteinRemaining" class="text-[11px] text-slate-400 block mt-2">Remaining: 160g</span>
+              </div>
+
+              <!-- Carbs -->
+              <div class="bg-slate-900/90 border border-gym-border rounded-xl p-4">
+                <div class="flex justify-between text-xs mb-1.5 font-bold">
+                  <span class="text-slate-400">Carbohydrates</span>
+                  <span id="carbsText" class="text-amber-400">0 / 280g</span>
+                </div>
+                <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div id="carbsProgress" class="h-full bg-amber-400 transition-all duration-300" style="width: 0%;"></div>
+                </div>
+                <span id="carbsRemaining" class="text-[11px] text-slate-400 block mt-2">Remaining: 280g</span>
+              </div>
+
+              <!-- Fat -->
+              <div class="bg-slate-900/90 border border-gym-border rounded-xl p-4">
+                <div class="flex justify-between text-xs mb-1.5 font-bold">
+                  <span class="text-slate-400">Fats</span>
+                  <span id="fatText" class="text-cyan-400">0 / 65g</span>
+                </div>
+                <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div id="fatProgress" class="h-full bg-cyan-400 transition-all duration-300" style="width: 0%;"></div>
+                </div>
+                <span id="fatRemaining" class="text-[11px] text-slate-400 block mt-2">Remaining: 65g</span>
+              </div>
+            </div>
+
+            <!-- Vitamins & Minerals Strip -->
+            <div id="micronutrientsStrip" class="p-3 bg-slate-950/80 rounded-xl border border-gym-border flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-slate-300 gap-2">
+              <div>
+                <span class="text-gym-orange font-bold">Vitamins:</span>
+                <span id="vitaminsText" class="text-slate-400 ml-1">Log meals below to calculate vitamins</span>
+              </div>
+              <div>
+                <span class="text-cyan-400 font-bold">Minerals:</span>
+                <span id="mineralsText" class="text-slate-400 ml-1">Log meals below to calculate minerals</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- DAILY MEAL LOG SECTIONS (Breakfast, Lunch, Snacks, Dinner) -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Breakfast -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5">
+              <div class="flex items-center justify-between pb-3 mb-3 border-b border-gym-border">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">🍳</span>
+                  <h5 class="font-display font-bold text-sm uppercase text-white">Breakfast</h5>
+                </div>
+                <span id="breakfastTotalCals" class="text-xs font-bold text-gym-orange">0 kcal</span>
+              </div>
+              <div id="trackerBreakfastList" class="space-y-2 min-h-[60px]">
+                <p class="text-slate-500 text-xs text-center py-3">No breakfast meals selected</p>
+              </div>
+            </div>
+
+            <!-- Lunch -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5">
+              <div class="flex items-center justify-between pb-3 mb-3 border-b border-gym-border">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">🍛</span>
+                  <h5 class="font-display font-bold text-sm uppercase text-white">Lunch</h5>
+                </div>
+                <span id="lunchTotalCals" class="text-xs font-bold text-gym-orange">0 kcal</span>
+              </div>
+              <div id="trackerLunchList" class="space-y-2 min-h-[60px]">
+                <p class="text-slate-500 text-xs text-center py-3">No lunch meals selected</p>
+              </div>
+            </div>
+
+            <!-- Snacks -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5">
+              <div class="flex items-center justify-between pb-3 mb-3 border-b border-gym-border">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">🥜</span>
+                  <h5 class="font-display font-bold text-sm uppercase text-white">Snacks</h5>
+                </div>
+                <span id="snacksTotalCals" class="text-xs font-bold text-gym-orange">0 kcal</span>
+              </div>
+              <div id="trackerSnacksList" class="space-y-2 min-h-[60px]">
+                <p class="text-slate-500 text-xs text-center py-3">No snacks selected</p>
+              </div>
+            </div>
+
+            <!-- Dinner -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-5">
+              <div class="flex items-center justify-between pb-3 mb-3 border-b border-gym-border">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">🍲</span>
+                  <h5 class="font-display font-bold text-sm uppercase text-white">Dinner</h5>
+                </div>
+                <span id="dinnerTotalCals" class="text-xs font-bold text-gym-orange">0 kcal</span>
+              </div>
+              <div id="trackerDinnerList" class="space-y-2 min-h-[60px]">
+                <p class="text-slate-500 text-xs text-center py-3">No dinner meals selected</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ANDHRA PRADESH & INDIAN FOOD CATALOGUE -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl p-6 space-y-5">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h4 class="font-display font-bold text-xl uppercase text-white">Indian & Andhra Pradesh Food Database</h4>
+                <p class="text-xs text-slate-400">Click "+ Add" on any food item to add it to your daily meal tracker</p>
+              </div>
+
+              <!-- Filter Tabs: All / Breakfast / Lunch / Snacks / Dinner / Andhra Special -->
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <button onclick="filterFoodCategory('All')" id="foodTabAll" class="px-3 py-1.5 rounded-lg text-xs font-bold uppercase bg-gym-orange text-white">All Foods</button>
+                <button onclick="filterFoodCategory('Breakfast')" id="foodTabBreakfast" class="px-3 py-1.5 rounded-lg text-xs font-bold uppercase bg-slate-900 text-slate-400 hover:text-white">Breakfast</button>
+                <button onclick="filterFoodCategory('Lunch')" id="foodTabLunch" class="px-3 py-1.5 rounded-lg text-xs font-bold uppercase bg-slate-900 text-slate-400 hover:text-white">Lunch</button>
+                <button onclick="filterFoodCategory('Snacks')" id="foodTabSnacks" class="px-3 py-1.5 rounded-lg text-xs font-bold uppercase bg-slate-900 text-slate-400 hover:text-white">Snacks</button>
+                <button onclick="filterFoodCategory('Dinner')" id="foodTabDinner" class="px-3 py-1.5 rounded-lg text-xs font-bold uppercase bg-slate-900 text-slate-400 hover:text-white">Dinner</button>
+                <button onclick="toggleAndhraSpecialFilter()" id="foodTabAndhra" class="px-3 py-1.5 rounded-lg text-xs font-bold uppercase bg-slate-900 text-amber-400 border border-amber-500/30 hover:bg-amber-500/10">🌶️ Andhra Special</button>
+              </div>
+            </div>
+
+            <!-- Food Cards Grid -->
+            <div id="foodDatabaseGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <!-- Loaded via JS -->
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= USER PAYMENTS & UPI ================= -->
+        <section id="viewUserPayments" class="hidden max-w-3xl mx-auto space-y-6">
+          <div class="bg-gym-card border border-gym-border rounded-2xl p-6 sm:p-8">
+            <h3 class="font-display font-bold text-2xl uppercase text-white mb-2">My Gym Subscription & Payments</h3>
+            <p class="text-xs text-slate-400 mb-6">Scan gym QR code to pay your membership or renewal fee, then submit your UTR reference.</p>
+
+            <!-- UPI QR Pay Card -->
+            <div class="bg-slate-900/90 border border-gym-border rounded-2xl p-6 flex flex-col md:flex-row items-center gap-6 mb-6">
+              <div class="p-4 bg-white rounded-2xl shadow-xl flex-shrink-0">
+                <div id="userUpiQrContainer"></div>
+              </div>
+              <div class="space-y-3 text-xs flex-1 w-full">
+                <div class="flex items-center justify-between border-b border-gym-border/60 pb-2">
+                  <span class="text-slate-400">Gym UPI ID:</span>
+                  <span class="font-mono font-bold text-gym-orange">powerfitnesskurnool@okaxis</span>
+                </div>
+                <div class="flex items-center justify-between border-b border-gym-border/60 pb-2">
+                  <span class="text-slate-400">Athlete Name:</span>
+                  <span id="userPaymentMemberName" class="font-bold text-white">Rahul Sharma</span>
+                </div>
+                <div class="flex items-center justify-between border-b border-gym-border/60 pb-2">
+                  <span class="text-slate-400">Subscription Fee:</span>
+                  <span id="userPaymentDueAmount" class="font-display font-bold text-lg text-gym-orange">₹1,800</span>
+                </div>
+
+                <!-- Submit UTR Confirmation -->
+                <div class="pt-2">
+                  <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Enter Transaction Reference / UTR after payment</label>
+                  <div class="flex gap-2">
+                    <input type="text" id="userUtrInput" placeholder="e.g. 324109827341" class="flex-1 bg-slate-950 border border-gym-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gym-orange">
+                    <button onclick="submitUserUtr()" class="bg-gym-orange hover:bg-gym-orangeHover text-white px-4 py-2 rounded-xl text-xs font-bold uppercase transition">
+                      Confirm Pay
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Personal Payment History -->
+            <div>
+              <h4 class="font-display font-bold text-lg uppercase text-white mb-3">My Receipts & Payment History</h4>
+              <div class="bg-slate-900 border border-gym-border rounded-xl overflow-hidden">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-950 uppercase font-bold text-slate-400 border-b border-gym-border">
+                    <tr>
+                      <th class="p-3">Receipt</th>
+                      <th class="p-3">Plan</th>
+                      <th class="p-3">Amount</th>
+                      <th class="p-3">Method</th>
+                      <th class="p-3">Status</th>
+                      <th class="p-3">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody id="userPaymentsTableBody" class="divide-y divide-gym-border/50 text-slate-300">
+                    <!-- Loaded via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- 1. RENEW MEMBERSHIP MODAL -->
+  <div id="renewModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-gym-card border border-gym-border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-gym-border">
+        <h4 class="font-display font-bold text-xl uppercase text-white">Renew Membership</h4>
+        <button onclick="closeRenewModal()" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+
+      <div class="text-xs space-y-1">
+        <p class="text-slate-400">Athlete: <span id="renewMemberName" class="font-bold text-white">--</span> (<span id="renewMemberCode" class="text-gym-orange">--</span>)</p>
+        <p class="text-slate-400">Current Expiry: <span id="renewCurrentExpiry" class="text-slate-300 font-semibold">--</span></p>
+      </div>
+
+      <div class="space-y-3">
+        <label class="block text-xs font-bold uppercase text-slate-400">Choose Renewal Plan</label>
+        <select id="renewPlanSelect" onchange="recalcRenewTotal()" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-gym-orange">
+          <option value="1 Month">1 Month — ₹800</option>
+          <option value="3 Months" selected>3 Months — ₹1,800</option>
+          <option value="6 Months">6 Months — ₹3,500</option>
+          <option value="1 Year">1 Year — ₹6,800</option>
+        </select>
+
+        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-gym-border">
+          <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-white">
+            <input type="checkbox" id="renewCardioOption" onchange="recalcRenewTotal()" class="w-4 h-4 text-gym-orange rounded bg-slate-800 border-gym-border">
+            <span>Include Cardio Access (+ ₹500)</span>
+          </label>
+          <span class="text-xs font-bold text-cyan-400">+ ₹500</span>
+        </div>
+
+        <div class="p-3 bg-slate-950 rounded-xl border border-gym-border flex items-center justify-between">
+          <span class="text-xs text-slate-400">Total Renewal Fee:</span>
+          <span id="renewFinalAmount" class="font-display font-bold text-2xl text-gym-orange">₹1,800</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Payment Method</label>
+          <select id="renewPaymentMethod" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-white">
+            <option value="UPI">UPI</option>
+            <option value="Cash">Cash at Desk</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-400 mb-1">UTR / Transaction Ref (Optional)</label>
+          <input type="text" id="renewTxnRef" placeholder="e.g. UPI827162" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-white">
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeRenewModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold uppercase transition">Cancel</button>
+        <button onclick="submitRenewal()" class="flex-1 py-2.5 bg-gym-orange hover:bg-gym-orangeHover text-white rounded-xl text-xs font-bold uppercase transition shadow-md shadow-gym-orangeGlow">Confirm Renewal</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 2. MEMBER PROFILE DETAILS MODAL -->
+  <div id="memberProfileModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-gym-card border border-gym-border rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-gym-border">
+        <h4 class="font-display font-bold text-xl uppercase text-white">Member Profile</h4>
+        <button onclick="closeMemberProfileModal()" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+
+      <div id="memberProfileContent" class="space-y-4">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 3. ADD/EDIT SUPPLEMENT MODAL -->
+  <div id="supplementModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-gym-card border border-gym-border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-gym-border">
+        <h4 id="supplementModalTitle" class="font-display font-bold text-xl uppercase text-white">Add Supplement Product</h4>
+        <button onclick="closeSupplementModal()" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+
+      <form id="supplementForm" onsubmit="handleSupplementSubmit(event)" class="space-y-3">
+        <input type="hidden" id="supplementEditId">
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Product Name *</label>
+          <input type="text" id="suppName" required class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Category *</label>
+            <select id="suppCategory" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-white">
+              <option value="Protein">Protein</option>
+              <option value="Creatine">Creatine</option>
+              <option value="Pre-Workout">Pre-Workout</option>
+              <option value="Mass Gainer">Mass Gainer</option>
+              <option value="Vitamins">Vitamins</option>
+              <option value="Electrolytes">Electrolytes</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Original Price (₹) *</label>
+            <input type="number" id="suppOriginalPrice" required min="1" step="any" placeholder="e.g. 2499" oninput="recalcOfferPreview()" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gym-orange">
+          </div>
+        </div>
+
+        <!-- Stock & Offer Selection -->
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Stock Status *</label>
+            <select id="suppStockStatus" onchange="handleStockStatusChange()" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-white">
+              <option value="AVAILABLE">🟢 Available</option>
+              <option value="OUT_OF_STOCK">🔴 Out of Stock</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Stock Units *</label>
+            <input type="number" id="suppStockQuantity" required min="0" value="25" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-white">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Special Offer? *</label>
+            <select id="suppHasOffer" onchange="toggleOfferFields()" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gym-orange">
+              <option value="false">No Offer</option>
+              <option value="true">🔥 Yes, Apply</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Collapsible Offer Details Section -->
+        <div id="suppOfferFieldsContainer" class="hidden space-y-3 p-3.5 rounded-xl bg-slate-950 border border-gym-orange/40">
+          <div class="flex items-center justify-between pb-1 border-b border-gym-border">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-gym-orange flex items-center gap-1">
+              <span>🔥</span> Offer Configuration
+            </span>
+            <span class="text-[10px] text-slate-400">Discount Engine</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Offer Type *</label>
+              <select id="suppOfferType" onchange="recalcOfferPreview()" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-1.5 text-xs text-white">
+                <option value="PERCENTAGE">Percentage Discount (%)</option>
+                <option value="FIXED">Fixed Amount Discount (₹)</option>
+              </select>
+            </div>
+            <div>
+              <label id="suppDiscountLabel" class="block text-[11px] font-bold uppercase text-slate-400 mb-1">Discount (%) *</label>
+              <input type="number" id="suppDiscountValue" min="1" step="any" placeholder="e.g. 20" oninput="recalcOfferPreview()" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-1.5 text-xs text-white">
+            </div>
+          </div>
+
+          <!-- Live Offer Price Preview Box -->
+          <div class="p-2.5 rounded-lg bg-slate-900 border border-gym-border flex items-center justify-between">
+            <span class="text-xs text-slate-400 font-medium">Calculated Offer Price:</span>
+            <div class="flex items-center gap-2">
+              <span id="suppOfferPricePreview" class="font-display font-bold text-lg text-gym-orange">₹0</span>
+              <span id="suppDiscountBadgePreview" class="text-[10px] font-bold text-red-400 bg-red-950/70 border border-red-800 px-1.5 py-0.5 rounded">0% OFF</span>
+            </div>
+          </div>
+
+          <!-- Optional Validity Dates -->
+          <div class="grid grid-cols-2 gap-3 pt-1 border-t border-slate-900">
+            <div>
+              <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Start Date (Optional)</label>
+              <input type="date" id="suppOfferStartDate" class="w-full bg-slate-900 border border-gym-border rounded-xl px-2.5 py-1.5 text-xs text-white">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">End Date (Optional)</label>
+              <input type="date" id="suppOfferEndDate" class="w-full bg-slate-900 border border-gym-border rounded-xl px-2.5 py-1.5 text-xs text-white">
+            </div>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Product Image *</label>
+          <div class="flex items-center gap-3">
+            <img id="suppPreviewImg" src="https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=400" class="w-16 h-16 rounded-xl object-cover border border-gym-border">
+            <div class="flex-1 space-y-1.5">
+              <label class="cursor-pointer inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-gym-border px-3 py-2 rounded-xl text-xs font-bold uppercase transition">
+                <svg class="w-3.5 h-3.5 text-gym-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                <span>Upload Product Image</span>
+                <input type="file" id="suppFileInput" accept="image/*" class="hidden" onchange="handleSupplementFileSelect(event)">
+              </label>
+              <div id="suppUploadMsg" class="text-[10px] text-slate-400">Select product image (JPEG, PNG, WEBP)</div>
+              <input type="hidden" id="suppImage" value="https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=400">
+            </div>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Description</label>
+          <textarea id="suppDescription" rows="2" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-white"></textarea>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeSupplementModal()" class="flex-1 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold uppercase">Cancel</button>
+          <button type="submit" class="flex-1 py-2 bg-gym-orange text-white rounded-xl text-xs font-bold uppercase shadow-md shadow-gym-orangeGlow">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- 4. RECEIPT PRINT MODAL -->
+  <div id="receiptModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-white text-slate-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 print:p-0 print:border-none">
+      <div class="text-center border-b pb-4">
+        <h3 class="font-display font-bold text-2xl uppercase tracking-wider text-black">PowerFitness</h3>
+        <p class="text-[10px] font-bold text-orange-600 uppercase tracking-widest">Kurnool Official Gym Receipt</p>
+        <p class="text-[10px] text-slate-500">Kurnool, Andhra Pradesh | Ph: +91 9876543210</p>
+      </div>
+
+      <div class="text-xs space-y-1.5" id="receiptContent">
+        <!-- Injected via JS -->
+      </div>
+
+      <div class="flex gap-2 pt-3 border-t">
+        <button onclick="closeReceiptModal()" class="flex-1 py-2 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold uppercase">Close</button>
+        <button onclick="window.print()" class="flex-1 py-2 bg-orange-600 text-white rounded-xl text-xs font-bold uppercase">Print</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  
+
+  <!-- 4. BUY SUPPLEMENT CHECKOUT MODAL (USER) -->
+  <div id="buySupplementModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div class="bg-gym-card border border-gym-border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
+      
+      <!-- STEP 1: PURCHASE CONFIRMATION SCREEN -->
+      <div id="buyStep1Confirm" class="space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-gym-border">
+          <div>
+            <h4 class="font-display font-bold text-xl uppercase text-white flex items-center gap-2">
+              <span>🛒</span> Buy Supplement
+            </h4>
+            <p class="text-xs text-slate-400">PowerFitnessKurnool Nutrition Store</p>
+          </div>
+          <button onclick="closeBuySupplementModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+        </div>
+
+        <input type="hidden" id="buySuppId">
+        
+        <!-- Product Card Preview -->
+        <div class="p-3.5 rounded-xl bg-slate-900 border border-gym-border flex items-center gap-3.5">
+          <img id="buySuppImage" src="" class="w-16 h-16 rounded-xl object-cover border border-gym-border">
+          <div class="flex-1 min-w-0">
+            <span id="buySuppCategory" class="text-[10px] font-bold uppercase tracking-wider text-gym-orange block">Category</span>
+            <h5 id="buySuppName" class="font-bold text-white text-sm truncate">Product Name</h5>
+            <div class="flex items-center gap-2 mt-1">
+              <span id="buySuppOriginalPrice" class="text-xs text-slate-500 line-through">₹2,499</span>
+              <span id="buySuppUnitPrice" class="font-display font-bold text-base text-gym-orange">₹1,999</span>
+              <span id="buySuppDiscountBadge" class="text-[10px] font-bold text-red-400 bg-red-950/70 border border-red-800 px-1.5 py-0.5 rounded">20% OFF</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quantity Selector & Available Stock -->
+        <div class="space-y-2 p-3 rounded-xl bg-slate-900/60 border border-gym-border/80">
+          <div class="flex items-center justify-between text-xs">
+            <label class="font-bold uppercase text-slate-300">Quantity</label>
+            <span id="buySuppStockNotice" class="text-slate-400 text-[11px]">Stock: <span id="buySuppStockCount" class="font-mono text-gym-emerald font-bold">15</span> available</span>
+          </div>
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="adjustBuyQuantity(-1)" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-lg flex items-center justify-center transition border border-gym-border">-</button>
+              <input type="number" id="buySuppQuantity" value="1" min="1" oninput="onBuyQuantityChange()" class="w-16 text-center bg-slate-900 border border-gym-border rounded-xl py-1.5 text-sm font-bold text-white focus:outline-none focus:border-gym-orange">
+              <button type="button" onclick="adjustBuyQuantity(1)" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-lg flex items-center justify-center transition border border-gym-border">+</button>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] text-slate-400 block uppercase font-medium">Total Amount</span>
+              <span id="buySuppTotalAmount" class="font-display font-extrabold text-2xl text-gym-orange">₹1,999</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- In-Person Collection Notice -->
+        <div class="p-3 rounded-xl bg-blue-950/40 border border-blue-800/40 text-blue-300 text-[11px] flex items-start gap-2">
+          <svg class="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Physical pickup at the gym Front Desk after payment. Staff will verify your order and hand you the product.</span>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex gap-3 pt-1">
+          <button type="button" onclick="closeBuySupplementModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold uppercase transition">Cancel</button>
+          <button type="button" onclick="proceedToPayment()" class="flex-1 py-2.5 bg-gradient-to-r from-gym-orange to-red-600 hover:from-gym-orangeHover hover:to-red-700 text-white rounded-xl text-xs font-bold uppercase shadow-lg shadow-gym-orangeGlow transition flex items-center justify-center gap-1.5">
+            <span>PROCEED TO PAYMENT →</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: UPI PAYMENT SCREEN -->
+      <div id="buyStep2Payment" class="hidden space-y-4 text-center">
+        <div class="flex items-center justify-between pb-3 border-b border-gym-border text-left">
+          <div>
+            <h4 class="font-display font-bold text-lg uppercase text-white tracking-wide">POWERFITNESSKURNOOL</h4>
+            <p class="text-xs text-gym-orange font-bold uppercase tracking-wider">UPI PAYMENT</p>
+          </div>
+          <button onclick="closeBuySupplementModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+        </div>
+
+        <!-- Product & Summary -->
+        <div class="p-3 rounded-xl bg-slate-900 border border-gym-border text-xs flex justify-between items-center text-left">
+          <div>
+            <span class="text-[10px] text-slate-400 uppercase font-medium">Product</span>
+            <h6 id="upiOrderProductName" class="font-bold text-white text-sm truncate max-w-[200px]">Whey Protein</h6>
+            <p id="upiOrderQuantity" class="text-slate-400 text-[11px]">Quantity: 1</p>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] text-slate-400 uppercase font-medium">Payable Amount</span>
+            <h5 id="upiOrderAmount" class="font-display font-bold text-xl text-gym-orange">₹1,999</h5>
+          </div>
+        </div>
+
+        <!-- QR Code Container: Displaying Admin Saved QR Code -->
+        <div id="buyQrCardWrapper" class="p-4 bg-white rounded-2xl inline-block shadow-2xl my-1 relative max-w-[240px] mx-auto transition-all">
+          <div id="buyUpiQrCodeContainer" class="flex items-center justify-center min-w-[160px] min-h-[160px]">
+            <img id="buyUpiQrImage" src="/api/upi/qr" alt="PowerFitnessKurnool UPI QR Code" class="w-44 h-44 object-contain rounded-lg block" onerror="handleBuyQrError(this)">
+          </div>
+          <div id="buyUpiQrErrorNotice" class="hidden p-4 text-center text-amber-500 bg-slate-900 rounded-xl border border-amber-500/30 text-xs font-semibold leading-snug">
+            ⚠️ UPI QR CODE UNAVAILABLE<br>
+            <span class="text-slate-400 font-normal mt-1 block">Please contact PowerFitnessKurnool front desk.</span>
+          </div>
+        </div>
+
+        <!-- UPI ID & Details -->
+        <div class="space-y-1 text-xs">
+          <p class="text-slate-400 leading-tight">Scan & Pay using:<br><span class="text-slate-300 font-medium">Google Pay, PhonePe, Paytm, BHIM or any UPI app</span></p>
+          <div class="mt-2">
+            <span class="text-slate-400 text-[11px] block font-medium">UPI ID:</span>
+            <div class="inline-flex items-center gap-2 bg-slate-900 border border-gym-border px-3 py-1.5 rounded-xl mt-1">
+              <span id="buyDisplayUpiId" class="font-mono font-bold text-gym-orange text-xs">powerfitnesskurnool@okaxis</span>
+              <button type="button" onclick="copyBuyUpiId()" class="text-slate-400 hover:text-white" title="Copy UPI ID">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- UPI Ref Input & Payment Status -->
+        <div class="text-left space-y-2 pt-1">
+          <div>
+            <label class="block text-[11px] font-bold uppercase text-slate-400 mb-1">UPI Transaction Reference / UTR Number</label>
+            <input type="text" id="buyUpiRef" placeholder="e.g. 423987123456" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange">
+          </div>
+          <div class="flex items-center justify-between text-xs p-2.5 rounded-xl bg-slate-950 border border-gym-border">
+            <span class="text-slate-400 font-medium">Payment Status:</span>
+            <span class="px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800 text-[10px] font-bold uppercase">PENDING (ADMIN VERIFICATION)</span>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex gap-2.5 pt-2">
+          <button type="button" onclick="backToOrderSummary()" class="py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold uppercase transition">← Back</button>
+          <button type="button" id="confirmOrderBtn" onclick="submitSupplementOrder()" class="flex-1 py-2.5 bg-gradient-to-r from-gym-orange to-red-600 hover:from-gym-orangeHover hover:to-red-700 text-white rounded-xl text-xs font-bold uppercase shadow-lg shadow-gym-orangeGlow transition flex items-center justify-center gap-1.5">
+            <span>[ CONFIRM ORDER ]</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 5. FRONT DESK COLLECTION & CAMERA MODAL (ADMIN) -->
+  <div id="collectionModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-gym-card border border-gym-border rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[95vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-gym-border">
+        <div>
+          <h4 class="font-display font-bold text-xl uppercase text-white flex items-center gap-2">
+            <span>📸</span> Front Desk Hand-Over Verification
+          </h4>
+          <p class="text-xs text-slate-400">Take Member Photo with Camera & Confirm Physical Hand-over</p>
+        </div>
+        <button onclick="closeCollectionModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+      </div>
+
+      <input type="hidden" id="colOrderId">
+
+      <!-- Member & Order Summary -->
+      <div class="p-4 rounded-xl bg-slate-900 border border-gym-border grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="flex items-center gap-3">
+          <img id="colMemberPhoto" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" class="w-14 h-14 rounded-xl object-cover border border-gym-border">
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold uppercase">Member Profile</span>
+            <h5 id="colMemberName" class="font-bold text-white text-sm">Member Name</h5>
+            <p id="colMemberCode" class="text-xs text-gym-orange font-mono font-bold">PFK-1001</p>
+            <p id="colMemberPhone" class="text-[11px] text-slate-400 font-mono">9876543210</p>
+          </div>
+        </div>
+
+        <div class="space-y-1 text-xs border-t sm:border-t-0 sm:border-l border-gym-border sm:pl-4 pt-2 sm:pt-0">
+          <div class="flex justify-between">
+            <span class="text-slate-400">Order ID:</span>
+            <span id="colOrderNumber" class="font-mono font-bold text-white">ORD-1001</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Product:</span>
+            <span id="colProductName" class="font-bold text-white truncate max-w-[150px]">Whey Protein</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Quantity:</span>
+            <span id="colQuantity" class="font-bold text-white">1</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Total:</span>
+            <span id="colTotalAmount" class="font-bold text-gym-orange">₹1,999</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Status:</span>
+            <span id="colStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-gym-emerald/20 text-gym-emerald border border-gym-emerald/40">READY FOR COLLECTION</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CAMERA CAPTURE SECTION -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-bold uppercase text-slate-400 flex items-center gap-1.5">
+            <span>📷</span> Member Hand-Over Photo *
+          </label>
+          <span class="text-[10px] text-slate-500">Live Device Camera Required</span>
+        </div>
+
+        <!-- Video & Canvas Preview -->
+        <div class="relative bg-black rounded-2xl overflow-hidden border border-gym-border aspect-video flex items-center justify-center">
+          <video id="colCameraVideo" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+          <canvas id="colCameraCanvas" class="hidden"></canvas>
+          <img id="colCapturedPreview" class="w-full h-full object-cover hidden" alt="Captured Photo">
+          
+          <div id="colCameraPlaceholder" class="text-center p-6 space-y-3">
+            <div class="w-14 h-14 mx-auto rounded-full bg-slate-900 border border-gym-border flex items-center justify-center text-slate-400">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <p class="text-xs text-slate-400">Open camera to take member hand-over photo</p>
+          </div>
+
+          <!-- Live Indicator Badge -->
+          <span id="colLiveBadge" class="hidden absolute top-3 left-3 bg-red-600/90 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-lg animate-pulse">
+            <span class="w-2 h-2 rounded-full bg-white"></span> LIVE CAMERA
+          </span>
+        </div>
+
+        <!-- Camera Action Buttons -->
+        <div class="flex items-center justify-center gap-2">
+          <button type="button" id="colStartCamBtn" onclick="startCollectionCamera()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold uppercase rounded-xl flex items-center gap-1.5 border border-gym-border transition">
+            <svg class="w-4 h-4 text-gym-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>Open Camera</span>
+          </button>
+
+          <button type="button" id="colCaptureBtn" onclick="captureCollectionPhoto()" class="hidden px-5 py-2 bg-gym-orange hover:bg-gym-orangeHover text-white text-xs font-bold uppercase rounded-xl flex items-center gap-1.5 shadow-md shadow-gym-orangeGlow transition">
+            <span>📸 Capture Photo</span>
+          </button>
+
+          <button type="button" id="colRetakeBtn" onclick="retakeCollectionPhoto()" class="hidden px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold uppercase rounded-xl flex items-center gap-1.5 border border-gym-border transition">
+            <span>🔄 Retake</span>
+          </button>
+
+          <label class="cursor-pointer px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white text-xs font-bold uppercase rounded-xl border border-gym-border transition">
+            <span>📁 Upload File</span>
+            <input type="file" id="colFileInput" accept="image/*" class="hidden" onchange="handleCollectionFileSelect(event)">
+          </label>
+        </div>
+      </div>
+
+      <!-- Notes Field -->
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Hand-Over Remarks (Optional)</label>
+        <input type="text" id="colNotes" placeholder="e.g. Handed over with seal intact, verified by staff" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-xs text-white">
+      </div>
+
+      <!-- Submit Handover -->
+      <div class="flex gap-3 pt-2 border-t border-gym-border">
+        <button type="button" onclick="closeCollectionModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold uppercase transition">Cancel</button>
+        <button type="button" id="confirmCollectionSubmitBtn" onclick="confirmCollectionSubmit()" class="flex-1 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold uppercase shadow-lg shadow-emerald-900/30 transition flex items-center justify-center gap-1.5">
+          <span>✓ Confirm Collection</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ADMIN ACCOUNT SETTINGS MODAL ================= -->
+  <div id="adminAccountModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div class="bg-gym-card border border-gym-border rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-gym-border pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-gym-orange/10 border border-gym-orange/30 flex items-center justify-center text-xl">
+            👤
+          </div>
+          <div>
+            <h4 class="font-display font-bold text-xl uppercase text-white tracking-wide">Account Settings</h4>
+            <p class="text-xs text-slate-400">Manage administrator login credentials</p>
+          </div>
+        </div>
+        <button onclick="closeAdminAccountModal()" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Feedback Banner -->
+      <div id="adminAccountMsg" class="hidden p-3.5 rounded-xl text-xs font-semibold"></div>
+
+      <!-- Section 1: Change Username -->
+      <div class="bg-slate-900/60 border border-gym-border rounded-2xl p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-gym-orange flex items-center gap-1.5">
+            <span>🏷️</span> Change Username
+          </span>
+          <span class="text-[10px] text-slate-400 font-mono">Current: <span id="displayCurrentAdminUsername" class="text-white font-bold">admin</span></span>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">New Username</label>
+            <input type="text" id="adminNewUsername" placeholder="Enter new admin username" class="w-full bg-slate-800 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange transition">
+          </div>
+          <button type="button" onclick="updateAdminUsername()" class="w-full py-2.5 bg-slate-800 hover:bg-gym-orange text-white hover:text-slate-950 font-bold uppercase tracking-wider rounded-xl transition border border-gym-border hover:border-gym-orange shadow-sm flex items-center justify-center gap-1.5">
+            <span>Save Username</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Section 2: Change Password -->
+      <div class="bg-slate-900/60 border border-gym-border rounded-2xl p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+            <span>🔒</span> Change Password
+          </span>
+          <span class="text-[10px] text-slate-400">Min 6 characters</span>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Current Password</label>
+            <input type="password" id="adminCurrentPassword" placeholder="Enter current password" class="w-full bg-slate-800 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange transition">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold uppercase text-slate-400 mb-1">New Password</label>
+              <input type="password" id="adminNewPassword" placeholder="Min 6 chars" class="w-full bg-slate-800 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange transition">
+            </div>
+            <div>
+              <label class="block font-bold uppercase text-slate-400 mb-1">Confirm New Password</label>
+              <input type="password" id="adminConfirmPassword" placeholder="Repeat new password" class="w-full bg-slate-800 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange transition">
+            </div>
+          </div>
+
+          <button type="button" onclick="updateAdminPassword()" class="w-full py-2.5 bg-gym-orange hover:bg-orange-600 text-slate-950 font-extrabold uppercase tracking-wider rounded-xl transition shadow-lg shadow-gym-orange/20 flex items-center justify-center gap-1.5">
+            <span>Change Password</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Actions / Close -->
+      <div class="flex items-center justify-between pt-2 border-t border-gym-border/60">
+        <button type="button" onclick="logout()" class="text-xs font-bold text-gym-crimson hover:text-red-400 uppercase tracking-wider flex items-center gap-1.5 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          <span>Log Out</span>
+        </button>
+        <button type="button" onclick="closeAdminAccountModal()" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold uppercase text-xs rounded-xl transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js?v=2.5"></script>
+</body>
+</html>
