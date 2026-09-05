@@ -1,4 +1,4 @@
-// PowerFitnessKurnool - Gym Management & Fitness Platform
+// Power Fitness Unisex GYM Kurnool - Gym Management & Fitness Platform
 // High Performance Client Application Logic
 
 const STATE = {
@@ -32,6 +32,27 @@ function initDateInputs() {
   if (admDate) admDate.value = today;
   const trackerDate = document.getElementById('trackerDateInput');
   if (trackerDate) trackerDate.value = today;
+}
+
+
+// ================= MOBILE NAVIGATION DRAWER =================
+function toggleMobileNav(forceState) {
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  if (!sidebar) return;
+
+  const isClosed = sidebar.classList.contains('-translate-x-full');
+  const shouldOpen = (typeof forceState === 'boolean') ? forceState : isClosed;
+
+  if (shouldOpen) {
+    sidebar.classList.remove('-translate-x-full');
+    if (backdrop) backdrop.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+  } else {
+    sidebar.classList.add('-translate-x-full');
+    if (backdrop) backdrop.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+  }
 }
 
 // ================= AUTHENTICATION & NAVIGATION =================
@@ -126,7 +147,7 @@ async function handleLogin(e) {
       showLoginError(data.error || 'Invalid credentials. Please verify username and password.');
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<span>Enter PowerFitness</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
+        submitBtn.innerHTML = '<span>Enter Power Fitness Unisex GYM Kurnool</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
       }
       return false;
     }
@@ -140,7 +161,7 @@ async function handleLogin(e) {
     showToast(`Welcome, ${data.fullName}!`, 'success');
     if (submitBtn) {
       submitBtn.disabled = false;
-      submitBtn.innerHTML = '<span>Enter PowerFitness</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
+      submitBtn.innerHTML = '<span>Enter Power Fitness Unisex GYM Kurnool</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
     }
 
     // Transition smoothly to dashboard
@@ -151,7 +172,7 @@ async function handleLogin(e) {
     showLoginError('Unable to connect to server. Please try again.');
     if (submitBtn) {
       submitBtn.disabled = false;
-      submitBtn.innerHTML = '<span>Enter PowerFitness</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
+      submitBtn.innerHTML = '<span>Enter Power Fitness Unisex GYM Kurnool</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
     }
     return false;
   }
@@ -289,7 +310,8 @@ function renderSidebarLinks(role) {
       { id: 'supplementOrders', label: 'Supplement Orders', icon: '📦' },
       { id: 'collectionHistory', label: 'Collection History', icon: '📋' },
       { id: 'upi', label: 'UPI / QR Code', icon: '📱' },
-      { id: 'reports', label: 'Reports', icon: '📈' }
+      { id: 'reports', label: 'Reports', icon: '📈' },
+      { id: 'aboutUs', label: 'About Us', icon: 'ℹ️' }
     ];
   } else {
     links = [
@@ -299,7 +321,8 @@ function renderSidebarLinks(role) {
       { id: 'supplements', label: 'Supplements Store', icon: '💊' },
       { id: 'userOrders', label: 'My Supplement Orders', icon: '📦' },
       { id: 'userCollectionHistory', label: 'Collection History', icon: '📋' },
-      { id: 'userPayments', label: 'My Payments & UPI', icon: '💳' }
+      { id: 'userPayments', label: 'My Payments & UPI', icon: '💳' },
+      { id: 'aboutUs', label: 'About Us', icon: 'ℹ️' }
     ];
   }
 
@@ -312,6 +335,9 @@ function renderSidebarLinks(role) {
 }
 
 function navigateTo(viewId) {
+  if (window.innerWidth < 768) {
+    try { toggleMobileNav(false); } catch (e) {}
+  }
   if (viewId !== 'admissions') {
     try { stopMemberCamera(); } catch (e) {}
   }
@@ -365,7 +391,7 @@ function navigateTo(viewId) {
     'viewPayments', 'viewSupplements', 'viewSupplementOrders', 'viewCollectionHistory',
     'viewUpi', 'viewReports',
     'viewUserDashboard', 'viewUserProfile', 'viewCalories', 'viewUserOrders',
-    'viewUserCollectionHistory', 'viewUserPayments'
+    'viewUserCollectionHistory', 'viewUserPayments', 'viewAboutUs'
   ];
   views.forEach(v => {
     const el = document.getElementById(v);
@@ -388,14 +414,15 @@ function navigateTo(viewId) {
     upi: ['UPI Payment Engine', 'Scan & Pay Configuration with QR Code'],
     reports: ['Analytics & Reports', 'Exportable Financial & Demographic Intelligence'],
     userDashboard: ['Member Dashboard', 'Your Personal Fitness & Membership Headquarters'],
-    userProfile: ['Membership ID Card', 'Official PowerFitnessKurnool Athlete Badge'],
+    userProfile: ['Membership ID Card', 'Official Power Fitness Unisex GYM Kurnool Athlete Badge'],
     calories: ['Calories & Andhra Diet', 'Goal-Oriented Macro & Nutrition Tracker'],
     userOrders: ['My Supplement Orders', 'Track Online Purchases & Front Desk Collection Status'],
     userCollectionHistory: ['My Collection History', 'Hand-over Receipts with Physical Collection Photos'],
-    userPayments: ['My Payments & Fees', 'Scan QR Code & Submit Payment UTR']
+    userPayments: ['My Payments & Fees', 'Scan QR Code & Submit Payment UTR'],
+    aboutUs: ['About Us', 'Power Fitness Unisex GYM Kurnool — Story, Vision & Facilities']
   };
 
-  const titlePair = titles[viewId] || ['PowerFitness', 'Kurnool'];
+  const titlePair = titles[viewId] || ['Power Fitness Unisex GYM Kurnool', 'Gym Management System'];
   const pTitle = document.getElementById('pageTitle');
   const pSub = document.getElementById('pageSubtitle');
   if (pTitle) pTitle.textContent = titlePair[0];
@@ -418,7 +445,8 @@ function navigateTo(viewId) {
     calories: 'viewCalories',
     userOrders: 'viewUserOrders',
     userCollectionHistory: 'viewUserCollectionHistory',
-    userPayments: 'viewUserPayments'
+    userPayments: 'viewUserPayments',
+    aboutUs: 'viewAboutUs'
   };
 
   const targetEl = document.getElementById(targetMap[viewId]);
@@ -446,6 +474,7 @@ function navigateTo(viewId) {
       case 'userOrders': loadUserOrders(); break;
       case 'userCollectionHistory': loadUserCollectionHistory(); break;
       case 'userPayments': loadUserPayments(); break;
+      case 'aboutUs': loadAboutUs(); break;
     }
   } catch (e) {
     console.error('Error loading view data for ' + viewId, e);
@@ -1616,7 +1645,7 @@ function printReceipt(p) {
         <span class="font-mono text-slate-700">${p.transactionRef}</span>
       </div>` : ''}
       <div class="text-center pt-4 text-[10px] text-slate-400">
-        PowerFitnessKurnool Supplement Store — Keep this receipt for front desk pickup!
+        Power Fitness Unisex GYM Kurnool Supplement Store — Keep this receipt for front desk pickup!
       </div>
     `;
     document.getElementById('receiptModal').classList.remove('hidden');
@@ -1667,7 +1696,7 @@ function printReceipt(p) {
       <span class="font-mono text-slate-700">${p.transactionRef}</span>
     </div>` : ''}
     <div class="text-center pt-4 text-[10px] text-slate-400">
-      Thank you for training with PowerFitnessKurnool!
+      Thank you for training with Power Fitness Unisex GYM Kurnool!
     </div>
   `;
   document.getElementById('receiptModal').classList.remove('hidden');
@@ -2065,7 +2094,7 @@ async function loadUpiSection() {
     const displayUpiId = document.getElementById('displayUpiId');
     if (displayUpiId) displayUpiId.textContent = upi.upiId || '8688610528-3@ybl';
     const displayMerchantName = document.getElementById('displayMerchantName');
-    if (displayMerchantName) displayMerchantName.textContent = upi.merchantName || 'PowerFitnessKurnool Gym';
+    if (displayMerchantName) displayMerchantName.textContent = upi.merchantName || 'Power Fitness Unisex GYM Kurnool';
     const displayUpiNotes = document.getElementById('displayUpiNotes');
     if (displayUpiNotes) displayUpiNotes.textContent = upi.notes || 'Include your Phone Number or PFK ID in transaction remarks.';
 
@@ -2109,7 +2138,7 @@ async function saveUpiConfig() {
 
   const payload = {
     upiId: upiId,
-    merchantName: merchantName || 'PowerFitnessKurnool Gym',
+    merchantName: merchantName || 'Power Fitness Unisex GYM Kurnool',
     notes: notes
   };
 
@@ -2683,7 +2712,7 @@ async function loadUserPaymentsView() {
       // Generate member-specific UPI QR Code
       const qrBox = document.getElementById('userUpiQrContainer');
       qrBox.innerHTML = '';
-      const upiUri = `upi://pay?pa=powerfitnesskurnool@okaxis&pn=PowerFitnessKurnool&am=${m.totalFee}&cu=INR`;
+      const upiUri = `upi://pay?pa=powerfitnesskurnool@okaxis&pn=Power%20Fitness%20Unisex%20GYM%20Kurnool&am=${m.totalFee}&cu=INR`;
       new QRCode(qrBox, {
         text: upiUri,
         width: 160,
@@ -2836,7 +2865,7 @@ async function downloadReport(type, format) {
     }
 
     const blob = await res.blob();
-    const filename = `PowerFitnessKurnool_${type.charAt(0).toUpperCase() + type.slice(1)}.${format}`;
+    const filename = `PowerFitnessUnisexGYMKurnool_${type.charAt(0).toUpperCase() + type.slice(1)}.${format}`;
     const blobUrl = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = blobUrl;
@@ -3705,5 +3734,170 @@ async function loadUserCollectionHistory() {
     `).join('');
   } catch (e) {
     console.error('Error loading user collection history', e);
+  }
+}
+
+
+// ================= ABOUT US SECTION =================
+STATE.aboutUsData = null;
+
+async function loadAboutUs() {
+  const btnEdit = document.getElementById('btnEditAboutUs');
+  if (btnEdit) {
+    if (STATE.user && STATE.user.role === 'ADMIN') {
+      btnEdit.classList.remove('hidden');
+    } else {
+      btnEdit.classList.add('hidden');
+    }
+  }
+
+  try {
+    const res = await fetch('/api/about');
+    if (!res.ok) throw new Error('Failed to load About Us details');
+    const data = await res.json();
+    STATE.aboutUsData = data;
+    renderAboutUsView(data);
+  } catch (err) {
+    console.error('Error loading about us:', err);
+  }
+}
+
+function renderAboutUsView(data) {
+  if (!data) return;
+  const setTxt = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val) el.textContent = val;
+  };
+
+  const headerName = document.getElementById('aboutHeaderGymName');
+  if (headerName && data.gymName) {
+    headerName.innerHTML = data.gymName.replace(/GYM/i, '<span class="text-gym-orange">GYM</span>');
+  }
+
+  setTxt('aboutHeaderTagline', data.tagline ? `"${data.tagline}"` : '');
+  setTxt('aboutGymIntro', data.introduction);
+  setTxt('aboutMission', data.mission);
+  setTxt('aboutVision', data.vision);
+  setTxt('aboutFacilities', data.facilities);
+  setTxt('aboutTrainers', data.trainers);
+  setTxt('aboutOwnerInfo', data.ownerInfo);
+  setTxt('aboutTimings', data.timings);
+  setTxt('aboutPhone', data.phone);
+  setTxt('aboutEmail', data.email);
+  setTxt('aboutAddress', data.address);
+  setTxt('aboutGalleryNote', data.galleryNote);
+}
+
+function openEditAboutUsModal() {
+  if (!STATE.user || STATE.user.role !== 'ADMIN') {
+    showToast('Admin access required to edit About Us', 'error');
+    return;
+  }
+
+  const d = STATE.aboutUsData || {};
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || '';
+  };
+
+  setVal('editAboutGymName', d.gymName || 'Power Fitness Unisex GYM Kurnool');
+  setVal('editAboutTagline', d.tagline || '');
+  setVal('editAboutIntro', d.introduction || '');
+  setVal('editAboutMission', d.mission || '');
+  setVal('editAboutVision', d.vision || '');
+  setVal('editAboutFacilities', d.facilities || '');
+  setVal('editAboutTrainers', d.trainers || '');
+  setVal('editAboutOwner', d.ownerInfo || '');
+  setVal('editAboutPhone', d.phone || '');
+  setVal('editAboutEmail', d.email || '');
+  setVal('editAboutTimings', d.timings || '');
+  setVal('editAboutAddress', d.address || '');
+  setVal('editAboutGalleryNote', d.galleryNote || '');
+
+  const msg = document.getElementById('editAboutUsMsg');
+  if (msg) {
+    msg.classList.add('hidden');
+    msg.textContent = '';
+  }
+
+  const modal = document.getElementById('editAboutUsModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeEditAboutUsModal() {
+  const modal = document.getElementById('editAboutUsModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function saveAboutUsContent(e) {
+  if (e) e.preventDefault();
+  if (!STATE.user || STATE.user.role !== 'ADMIN') {
+    showToast('Admin access required', 'error');
+    return;
+  }
+
+  const getVal = id => {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  };
+
+  const payload = {
+    gymName: getVal('editAboutGymName') || 'Power Fitness Unisex GYM Kurnool',
+    tagline: getVal('editAboutTagline'),
+    introduction: getVal('editAboutIntro'),
+    mission: getVal('editAboutMission'),
+    vision: getVal('editAboutVision'),
+    facilities: getVal('editAboutFacilities'),
+    trainers: getVal('editAboutTrainers'),
+    ownerInfo: getVal('editAboutOwner'),
+    phone: getVal('editAboutPhone'),
+    email: getVal('editAboutEmail'),
+    timings: getVal('editAboutTimings'),
+    address: getVal('editAboutAddress'),
+    galleryNote: getVal('editAboutGalleryNote')
+  };
+
+  const saveBtn = document.getElementById('btnSaveAboutUs');
+  const originalHtml = saveBtn ? saveBtn.innerHTML : '';
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span>Saving...</span>';
+  }
+
+  try {
+    const res = await fetch('/api/about', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + STATE.token
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to update About Us');
+    }
+
+    const updated = await res.json();
+    const aboutData = (updated && updated.about) ? updated.about : updated;
+    STATE.aboutUsData = aboutData;
+    renderAboutUsView(aboutData);
+    closeEditAboutUsModal();
+    showToast('About Us content updated successfully! ✨', 'success');
+  } catch (err) {
+    console.error('Error saving about us:', err);
+    const msg = document.getElementById('editAboutUsMsg');
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-950/80 border border-red-500/60 text-red-200';
+      msg.textContent = err.message || 'Error updating About Us';
+      msg.classList.remove('hidden');
+    }
+    showToast(err.message || 'Error updating About Us', 'error');
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = originalHtml;
+    }
   }
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PowerFitnessKurnool — Complete Gym Management & Fitness Platform</title>
+  <title>Power Fitness Unisex GYM Kurnool — Complete Gym Management & Fitness Platform</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -60,8 +60,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
           </svg>
         </div>
-        <h1 class="font-display tracking-wider text-3xl font-bold uppercase text-white tracking-tight">
-          Power<span class="text-gym-orange">Fitness</span>Kurnool
+        <h1 class="font-display tracking-wider text-2xl sm:text-3xl font-bold uppercase text-white tracking-tight leading-snug">
+          Power Fitness Unisex <span class="text-gym-orange">GYM</span> Kurnool
         </h1>
         <p class="text-xs font-semibold text-gym-orange tracking-widest uppercase mt-1">
           "Build Your Body. Build Your Discipline."
@@ -103,7 +103,7 @@
         </div>
 
         <button type="button" id="loginSubmitBtn" onclick="handleLogin(event)" class="w-full cursor-pointer bg-gradient-to-r from-gym-orange to-red-600 hover:from-gym-orangeHover hover:to-red-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-gym-orangeGlow transition-all duration-200 flex items-center justify-center gap-2 mt-2">
-          <span>Enter PowerFitness</span>
+          <span>Enter Power Fitness Unisex GYM Kurnool</span>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </button>
       </form>
@@ -136,8 +136,11 @@
   <!-- MAIN APP WRAPPER (HIDDEN WHEN LOGGED OUT) -->
   <div id="mainApp" class="hidden min-h-screen flex flex-col md:flex-row bg-gym-bg">
 
+    <!-- MOBILE SIDEBAR BACKDROP -->
+    <div id="sidebarBackdrop" onclick="toggleMobileNav(false)" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-40 md:hidden transition-opacity"></div>
+
     <!-- SIDEBAR -->
-    <aside id="sidebar" class="w-full md:w-64 bg-gym-card border-r border-gym-border flex flex-col flex-shrink-0 z-30 transition-all duration-300">
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-gym-card border-r border-gym-border flex flex-col flex-shrink-0 transition-transform duration-300 ease-in-out -translate-x-full md:translate-x-0 md:static md:w-64">
       <!-- Brand Header -->
       <div class="p-5 border-b border-gym-border flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -147,8 +150,8 @@
             </svg>
           </div>
           <div>
-            <span class="font-display font-bold text-lg uppercase tracking-wide text-white block leading-none">
-              Power<span class="text-gym-orange">Fitness</span>
+            <span class="font-display font-bold text-sm uppercase tracking-wide text-white block leading-snug">
+              Power Fitness Unisex <span class="text-gym-orange">GYM</span>
             </span>
             <span class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Kurnool</span>
           </div>
@@ -181,16 +184,16 @@
     </aside>
 
     <!-- CONTENT AREA -->
-    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto overflow-x-hidden">
       <!-- TOP NAVBAR -->
-      <header class="bg-gym-card/70 border-b border-gym-border backdrop-blur sticky top-0 z-20 px-6 py-4 flex items-center justify-between">
+      <header class="bg-gym-card/70 border-b border-gym-border backdrop-blur sticky top-0 z-20 px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <button onclick="toggleMobileNav()" class="md:hidden text-slate-400 hover:text-white p-1">
+          <button onclick="toggleMobileNav()" class="md:hidden text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition" aria-label="Toggle Navigation">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
           <div>
-            <h2 id="pageTitle" class="font-display font-bold text-xl uppercase tracking-wide text-white">Dashboard</h2>
-            <p id="pageSubtitle" class="text-xs text-slate-400 font-medium">PowerFitness Gym Management System</p>
+            <h2 id="pageTitle" class="font-display font-bold text-lg sm:text-xl uppercase tracking-wide text-white truncate max-w-[200px] sm:max-w-none">Dashboard</h2>
+            <p id="pageSubtitle" class="text-[11px] sm:text-xs text-slate-400 font-medium truncate max-w-[220px] sm:max-w-none">Power Fitness Unisex GYM Kurnool</p>
           </div>
         </div>
 
@@ -228,7 +231,7 @@
       </header>
 
       <!-- VIEW PANELS -->
-      <div class="p-6 flex-1" id="viewContainer">
+      <div class="p-3 sm:p-6 flex-1" id="viewContainer">
 
         <!-- ================= ADMIN DASHBOARD ================= -->
         <section id="viewAdminDashboard" class="space-y-6">
@@ -390,7 +393,7 @@
           <div class="bg-gym-card border border-gym-border rounded-2xl p-6 sm:p-8">
             <div class="mb-6 pb-4 border-b border-gym-border">
               <h3 class="font-display font-bold text-2xl uppercase text-white">New Member Admission</h3>
-              <p class="text-xs text-slate-400">Enroll an athlete into PowerFitnessKurnool. Price & expiry calculate automatically.</p>
+              <p class="text-xs text-slate-400">Enroll an athlete into Power Fitness Unisex GYM Kurnool. Price & expiry calculate automatically.</p>
             </div>
 
             <form id="admissionForm" onsubmit="handleAdmissionSubmit(event)" class="space-y-6">
@@ -1087,16 +1090,16 @@
             <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gym-orange/10 text-gym-orange mb-3">
               <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
             </div>
-            <h3 class="font-display font-bold text-2xl uppercase text-white">PowerFitness Kurnool UPI QR</h3>
+            <h3 class="font-display font-bold text-2xl uppercase text-white">Power Fitness Unisex GYM Kurnool UPI QR</h3>
             <p class="text-xs text-slate-400 max-w-md mx-auto mt-1">Scan this QR code using Google Pay, PhonePe, Paytm, or BHIM to make membership and cardio fee payments.</p>
 
             <!-- Rendered QR Box -->
             <div id="adminQrCardWrapper" class="my-6 inline-block p-5 bg-white rounded-2xl shadow-2xl relative">
               <div id="upiQrCodeContainer" class="flex items-center justify-center min-w-[200px] min-h-[200px]">
-                <img id="displayUpiQrImg" src="/api/upi/qr" alt="PowerFitnessKurnool UPI QR Code" class="w-48 h-48 object-contain rounded-lg block" onerror="handleAdminQrError(this)">
+                <img id="displayUpiQrImg" src="/api/upi/qr" alt="Power Fitness Unisex GYM Kurnool UPI QR Code" class="w-48 h-48 object-contain rounded-lg block" onerror="handleAdminQrError(this)">
                 <div id="adminUpiQrErrorNotice" class="hidden p-4 text-center text-amber-500 bg-slate-900 rounded-xl border border-amber-500/30 text-xs font-semibold">
                   ⚠️ UPI QR CODE UNAVAILABLE<br>
-                  <span class="text-slate-400 font-normal mt-1 block">Please contact PowerFitnessKurnool front desk.</span>
+                  <span class="text-slate-400 font-normal mt-1 block">Please contact Power Fitness Unisex GYM Kurnool front desk.</span>
                 </div>
               </div>
             </div>
@@ -1109,7 +1112,7 @@
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                 </button>
               </div>
-              <p id="displayMerchantName" class="text-slate-300 font-semibold mt-2">PowerFitnessKurnool Gym</p>
+              <p id="displayMerchantName" class="text-slate-300 font-semibold mt-2">Power Fitness Unisex GYM Kurnool</p>
               <p id="displayUpiNotes" class="text-[11px] text-slate-500 max-w-sm mx-auto mt-1">Include your Phone Number or PFK ID in transaction remarks.</p>
             </div>
 
@@ -1386,8 +1389,8 @@
                   <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
                 </div>
                 <div>
-                  <h4 class="font-display font-bold text-lg uppercase text-white tracking-wide leading-none">PowerFitness</h4>
-                  <span class="text-[9px] font-bold text-gym-orange tracking-widest uppercase">Kurnool Member Card</span>
+                  <h4 class="font-display font-bold text-sm uppercase text-white tracking-wide leading-none">Power Fitness Unisex <span class="text-gym-orange">GYM</span></h4>
+                  <span class="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Kurnool Member Card</span>
                 </div>
               </div>
               <span id="cardStatusBadge" class="bg-gym-emerald/20 text-gym-emerald text-[11px] font-bold px-2.5 py-1 rounded-md border border-gym-emerald/30">ACTIVE</span>
@@ -1758,8 +1761,8 @@
             <!-- Personal Payment History -->
             <div>
               <h4 class="font-display font-bold text-lg uppercase text-white mb-3">My Receipts & Payment History</h4>
-              <div class="bg-slate-900 border border-gym-border rounded-xl overflow-hidden">
-                <table class="w-full text-left text-xs">
+              <div class="bg-slate-900 border border-gym-border rounded-xl overflow-hidden overflow-x-auto">
+                <table class="w-full text-left text-xs min-w-[500px]">
                   <thead class="bg-slate-950 uppercase font-bold text-slate-400 border-b border-gym-border">
                     <tr>
                       <th class="p-3">Receipt</th>
@@ -1779,7 +1782,257 @@
           </div>
         </section>
 
+
+        <!-- ================= ABOUT US (UNIVERSAL) ================= -->
+        <section id="viewAboutUs" class="hidden space-y-6">
+          <!-- Hero Banner -->
+          <div class="bg-gradient-to-r from-slate-900 via-gym-card to-slate-900 border border-gym-border rounded-3xl p-6 sm:p-10 relative overflow-hidden shadow-2xl">
+            <div class="absolute -top-20 -right-20 w-80 h-80 bg-gym-orange/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div class="space-y-3 max-w-2xl">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gym-orange/15 border border-gym-orange/30 text-gym-orange text-xs font-bold uppercase tracking-wider">
+                  <span>🏛️ Official Gym Information</span>
+                </div>
+                <h2 id="aboutHeaderGymName" class="font-display font-extrabold text-2xl sm:text-4xl uppercase text-white tracking-tight">
+                  Power Fitness Unisex <span class="text-gym-orange">GYM</span> Kurnool
+                </h2>
+                <p id="aboutHeaderTagline" class="text-slate-300 text-sm sm:text-base font-medium italic">
+                  "Transform Your Body, Mind & Health"
+                </p>
+                <p id="aboutGymIntro" class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                  Welcome to Power Fitness Unisex GYM Kurnool — the premier unisex fitness destination in Kurnool. We offer high-performance strength equipment, professional cardio training, personal coaching, and structured sports nutrition guidance designed to help men and women achieve peak physical vitality.
+                </p>
+              </div>
+
+              <!-- Admin Action -->
+              <div class="flex-shrink-0 flex flex-col gap-3">
+                <button id="btnEditAboutUs" onclick="openEditAboutUsModal()" class="hidden bg-gradient-to-r from-gym-orange to-red-600 hover:from-gym-orangeHover hover:to-red-700 text-white font-bold text-xs uppercase px-5 py-3 rounded-2xl shadow-lg shadow-gym-orangeGlow transition flex items-center justify-center gap-2">
+                  <span>✏️ Edit About Content</span>
+                </button>
+                <div class="bg-slate-900/80 border border-gym-border p-4 rounded-2xl text-center">
+                  <span class="text-[10px] text-slate-500 uppercase tracking-widest block font-bold">Location</span>
+                  <span class="text-xs font-bold text-slate-200">Kurnool, Andhra Pradesh</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mission & Vision Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Mission -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-6 relative overflow-hidden group hover:border-gym-orange/50 transition">
+              <div class="w-12 h-12 rounded-2xl bg-gym-orange/10 border border-gym-orange/30 flex items-center justify-center text-2xl mb-4 text-gym-orange">
+                🎯
+              </div>
+              <h3 class="font-display font-bold text-lg uppercase text-white tracking-wide mb-2">Our Mission</h3>
+              <p id="aboutMission" class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                To provide a modern, motivating, and results-driven fitness sanctuary for fitness enthusiasts in Kurnool, empowering individuals of all fitness levels with expert coaching, disciplined workout environments, and comprehensive nutrition solutions.
+              </p>
+            </div>
+
+            <!-- Vision -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-6 relative overflow-hidden group hover:border-gym-cyan/50 transition">
+              <div class="w-12 h-12 rounded-2xl bg-gym-cyan/10 border border-gym-cyan/30 flex items-center justify-center text-2xl mb-4 text-gym-cyan">
+                👁️
+              </div>
+              <h3 class="font-display font-bold text-lg uppercase text-white tracking-wide mb-2">Our Vision</h3>
+              <p id="aboutVision" class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                To be recognised as Kurnool's foremost unisex fitness center, known for integrity, elite conditioning, accessible athletic facilities, and transforming lives through daily fitness and holistic well-being.
+              </p>
+            </div>
+          </div>
+
+          <!-- Facilities & Equipment -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl p-6 sm:p-8 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-gym-border">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-xl">
+                  🏋️
+                </div>
+                <div>
+                  <h3 class="font-display font-bold text-lg uppercase text-white tracking-wide">World-Class Facilities & Equipment</h3>
+                  <p class="text-xs text-slate-400">State-of-the-art training zones for men and women</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold text-gym-orange bg-gym-orange/10 px-2.5 py-1 rounded-full uppercase">Unisex Hub</span>
+            </div>
+
+            <p id="aboutFacilities" class="text-slate-300 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
+              • Heavy Weight Training & Powerlifting Zone (Olympic Barbells, Dumbbells up to 50kg, Squat Racks)
+              • High-End Cardio Suite (Treadmills, Ellipticals, Spin Bikes with Digital Tracking)
+              • Dedicated Unisex Workout Floors & Certified Female/Male Training Windows
+              • Functional Crossfit & Calisthenics Rig with Battle Ropes & Plyo Boxes
+              • High-Protein Supplement Bar & Front Desk Nutrition Counter
+              • Clean Locker Rooms, Changing Areas & Continuous Mineral Water Station
+            </p>
+
+            <!-- Facilities Visual Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-2">
+              <div class="bg-slate-900 border border-gym-border p-3 rounded-xl text-center">
+                <span class="text-2xl block mb-1">💪</span>
+                <span class="text-[11px] font-bold text-white uppercase">Strength</span>
+              </div>
+              <div class="bg-slate-900 border border-gym-border p-3 rounded-xl text-center">
+                <span class="text-2xl block mb-1">🏃</span>
+                <span class="text-[11px] font-bold text-white uppercase">Cardio</span>
+              </div>
+              <div class="bg-slate-900 border border-gym-border p-3 rounded-xl text-center">
+                <span class="text-2xl block mb-1">🚻</span>
+                <span class="text-[11px] font-bold text-white uppercase">Unisex Zone</span>
+              </div>
+              <div class="bg-slate-900 border border-gym-border p-3 rounded-xl text-center">
+                <span class="text-2xl block mb-1">🥗</span>
+                <span class="text-[11px] font-bold text-white uppercase">Nutrition</span>
+              </div>
+              <div class="bg-slate-900 border border-gym-border p-3 rounded-xl text-center">
+                <span class="text-2xl block mb-1">🔒</span>
+                <span class="text-[11px] font-bold text-white uppercase">Lockers</span>
+              </div>
+              <div class="bg-slate-900 border border-gym-border p-3 rounded-xl text-center">
+                <span class="text-2xl block mb-1">🚿</span>
+                <span class="text-[11px] font-bold text-white uppercase">Hygiene</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Trainers & Leadership -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- Trainers -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-6 space-y-4">
+              <div class="flex items-center gap-3 pb-3 border-b border-gym-border">
+                <div class="w-10 h-10 rounded-xl bg-gym-emerald/10 border border-gym-emerald/30 flex items-center justify-center text-xl">
+                  🥇
+                </div>
+                <div>
+                  <h3 class="font-display font-bold text-lg uppercase text-white tracking-wide">Certified Fitness Coaches</h3>
+                  <p class="text-xs text-slate-400">Personalised guidance, posture correction & transformation</p>
+                </div>
+              </div>
+              <p id="aboutTrainers" class="text-slate-300 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
+                • Head Coach: Senior Strength & Conditioning Specialist (10+ years experience)
+                • Certified Female Fitness Trainer for Dedicated Women's Batches
+                • Functional Mobility & Rehabilitation Coach
+                • Sports Nutrition & Andhra Diet Customization Consultant
+              </p>
+            </div>
+
+            <!-- Gym Owner Info -->
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-6 space-y-4">
+              <div class="flex items-center gap-3 pb-3 border-b border-gym-border">
+                <div class="w-10 h-10 rounded-xl bg-gym-orange/10 border border-gym-orange/30 flex items-center justify-center text-xl">
+                  👑
+                </div>
+                <div>
+                  <h3 class="font-display font-bold text-lg uppercase text-white tracking-wide">Gym Owner & Management</h3>
+                  <p class="text-xs text-slate-400">Leadership dedicated to your athletic growth</p>
+                </div>
+              </div>
+              <p id="aboutOwnerInfo" class="text-slate-300 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
+                Managed with pride and dedication by gym leadership in Kurnool. We are committed to maintaining the highest cleanliness, state-of-the-art biomechanical equipment, and a welcoming community atmosphere where every member achieves their goals.
+              </p>
+            </div>
+          </div>
+
+          <!-- Contact & Timings Grid -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl p-6 sm:p-8 space-y-6">
+            <div class="flex items-center gap-3 pb-3 border-b border-gym-border">
+              <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-xl">
+                📍
+              </div>
+              <div>
+                <h3 class="font-display font-bold text-lg uppercase text-white tracking-wide">Contact Details, Timings & Location</h3>
+                <p class="text-xs text-slate-400">Visit us or get in touch for admissions and batch inquiries</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+              <div class="bg-slate-900 border border-gym-border p-4 rounded-xl space-y-1">
+                <span class="text-slate-400 uppercase font-bold text-[10px] block">⏰ Operating Hours</span>
+                <p id="aboutTimings" class="text-white font-bold whitespace-pre-line">Morning: 5:30 AM – 11:00 AM
+Evening: 4:30 PM – 10:00 PM
+Sunday: 6:00 AM – 11:00 AM</p>
+              </div>
+
+              <div class="bg-slate-900 border border-gym-border p-4 rounded-xl space-y-1">
+                <span class="text-slate-400 uppercase font-bold text-[10px] block">📞 Phone Number</span>
+                <p id="aboutPhone" class="text-gym-orange font-mono font-bold text-sm">+91 98765 43210</p>
+                <p class="text-[10px] text-slate-500">Direct Front Desk & WhatsApp</p>
+              </div>
+
+              <div class="bg-slate-900 border border-gym-border p-4 rounded-xl space-y-1">
+                <span class="text-slate-400 uppercase font-bold text-[10px] block">✉️ Official Email</span>
+                <p id="aboutEmail" class="text-slate-200 font-mono font-bold break-all">contact@powerfitnesskurnool.com</p>
+                <p class="text-[10px] text-slate-500">Inquiries & Partnerships</p>
+              </div>
+
+              <div class="bg-slate-900 border border-gym-border p-4 rounded-xl space-y-1">
+                <span class="text-slate-400 uppercase font-bold text-[10px] block">🏢 Address</span>
+                <p id="aboutAddress" class="text-slate-200 font-semibold leading-relaxed">Power Fitness Unisex GYM Kurnool, Near Old Bus Stand Road, Kurnool, Andhra Pradesh — 518001</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gallery Preview Placeholder -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl p-6 sm:p-8 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-gym-border">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-xl">
+                  📸
+                </div>
+                <div>
+                  <h3 class="font-display font-bold text-lg uppercase text-white tracking-wide">Gym Atmosphere & Equipment Gallery</h3>
+                  <p id="aboutGalleryNote" class="text-xs text-slate-400">Visual glimpses of Power Fitness Unisex GYM Kurnool floor and training zones</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold text-slate-400 bg-slate-800 px-2.5 py-1 rounded-full uppercase">Floor Preview</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div class="aspect-video rounded-xl bg-slate-900 border border-gym-border flex flex-col items-center justify-center text-center p-3 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                <span class="text-2xl mb-1 relative z-10">🏋️‍♂️</span>
+                <span class="text-[11px] font-bold text-white relative z-10">Strength Training</span>
+                <span class="text-[9px] text-gym-orange relative z-10">Heavy Iron Section</span>
+              </div>
+              <div class="aspect-video rounded-xl bg-slate-900 border border-gym-border flex flex-col items-center justify-center text-center p-3 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                <span class="text-2xl mb-1 relative z-10">🏃‍♀️</span>
+                <span class="text-[11px] font-bold text-white relative z-10">Cardio Arena</span>
+                <span class="text-[9px] text-gym-orange relative z-10">Treadmills & Bikes</span>
+              </div>
+              <div class="aspect-video rounded-xl bg-slate-900 border border-gym-border flex flex-col items-center justify-center text-center p-3 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                <span class="text-2xl mb-1 relative z-10">🔥</span>
+                <span class="text-[11px] font-bold text-white relative z-10">Crossfit & Functional</span>
+                <span class="text-[9px] text-gym-orange relative z-10">Agility & Conditioning</span>
+              </div>
+              <div class="aspect-video rounded-xl bg-slate-900 border border-gym-border flex flex-col items-center justify-center text-center p-3 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                <span class="text-2xl mb-1 relative z-10">🥤</span>
+                <span class="text-[11px] font-bold text-white relative z-10">Supplement Desk</span>
+                <span class="text-[9px] text-gym-orange relative z-10">Whey & Pre-Workout</span>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
+
+      <!-- APP FOOTER -->
+      <footer class="border-t border-gym-border bg-gym-card/40 px-4 sm:px-6 py-4 mt-auto text-xs text-slate-400">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+          <div>
+            <span class="font-display font-bold uppercase tracking-wider text-slate-200">Power Fitness Unisex <span class="text-gym-orange">GYM</span> Kurnool</span>
+            <span class="block sm:inline sm:ml-2 text-slate-500">· Elite Training & Nutrition Portal</span>
+          </div>
+          <div class="flex items-center justify-center gap-3 text-[11px] text-slate-400">
+            <button onclick="navigateTo('aboutUs')" class="hover:text-gym-orange transition">About Us</button>
+            <span>·</span>
+            <span>Kurnool, AP</span>
+            <span>·</span>
+            <span class="text-gym-orange font-medium">All Rights Reserved</span>
+          </div>
+        </div>
+      </footer>
     </main>
   </div>
 
@@ -1990,8 +2243,8 @@
   <div id="receiptModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
     <div class="bg-white text-slate-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 print:p-0 print:border-none">
       <div class="text-center border-b pb-4">
-        <h3 class="font-display font-bold text-2xl uppercase tracking-wider text-black">PowerFitness</h3>
-        <p class="text-[10px] font-bold text-orange-600 uppercase tracking-widest">Kurnool Official Gym Receipt</p>
+        <h3 class="font-display font-bold text-xl uppercase tracking-wider text-black">Power Fitness Unisex <span class="text-orange-600">GYM</span></h3>
+        <p class="text-[10px] font-bold text-slate-700 uppercase tracking-widest">Kurnool Official Gym Receipt</p>
         <p class="text-[10px] text-slate-500">Kurnool, Andhra Pradesh | Ph: +91 9876543210</p>
       </div>
 
@@ -2020,7 +2273,7 @@
             <h4 class="font-display font-bold text-xl uppercase text-white flex items-center gap-2">
               <span>🛒</span> Buy Supplement
             </h4>
-            <p class="text-xs text-slate-400">PowerFitnessKurnool Nutrition Store</p>
+            <p class="text-xs text-slate-400">Power Fitness Unisex GYM Kurnool Nutrition Store</p>
           </div>
           <button onclick="closeBuySupplementModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
         </div>
@@ -2079,7 +2332,7 @@
       <div id="buyStep2Payment" class="hidden space-y-4 text-center">
         <div class="flex items-center justify-between pb-3 border-b border-gym-border text-left">
           <div>
-            <h4 class="font-display font-bold text-lg uppercase text-white tracking-wide">POWERFITNESSKURNOOL</h4>
+            <h4 class="font-display font-bold text-lg uppercase text-white tracking-wide">POWER FITNESS UNISEX GYM KURNOOL</h4>
             <p class="text-xs text-gym-orange font-bold uppercase tracking-wider">UPI PAYMENT</p>
           </div>
           <button onclick="closeBuySupplementModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
@@ -2101,11 +2354,11 @@
         <!-- QR Code Container: Displaying Admin Saved QR Code -->
         <div id="buyQrCardWrapper" class="p-4 bg-white rounded-2xl inline-block shadow-2xl my-1 relative max-w-[240px] mx-auto transition-all">
           <div id="buyUpiQrCodeContainer" class="flex items-center justify-center min-w-[160px] min-h-[160px]">
-            <img id="buyUpiQrImage" src="/api/upi/qr" alt="PowerFitnessKurnool UPI QR Code" class="w-44 h-44 object-contain rounded-lg block" onerror="handleBuyQrError(this)">
+            <img id="buyUpiQrImage" src="/api/upi/qr" alt="Power Fitness Unisex GYM Kurnool UPI QR Code" class="w-44 h-44 object-contain rounded-lg block" onerror="handleBuyQrError(this)">
           </div>
           <div id="buyUpiQrErrorNotice" class="hidden p-4 text-center text-amber-500 bg-slate-900 rounded-xl border border-amber-500/30 text-xs font-semibold leading-snug">
             ⚠️ UPI QR CODE UNAVAILABLE<br>
-            <span class="text-slate-400 font-normal mt-1 block">Please contact PowerFitnessKurnool front desk.</span>
+            <span class="text-slate-400 font-normal mt-1 block">Please contact Power Fitness Unisex GYM Kurnool front desk.</span>
           </div>
         </div>
 
@@ -2350,6 +2603,109 @@
     </div>
   </div>
 
-  <script src="/js/app.js?v=2.5"></script>
+  
+  <!-- ================= ADMIN EDIT ABOUT US MODAL ================= -->
+  <div id="editAboutUsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div class="bg-gym-card border border-gym-border rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-gym-border pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-gym-orange/10 border border-gym-orange/30 flex items-center justify-center text-xl">
+            ✏️
+          </div>
+          <div>
+            <h4 class="font-display font-bold text-xl uppercase text-white tracking-wide">Edit About Us Content</h4>
+            <p class="text-xs text-slate-400">Update gym description, mission, facilities and contact details</p>
+          </div>
+        </div>
+        <button onclick="closeEditAboutUsModal()" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Feedback Banner -->
+      <div id="editAboutUsMsg" class="hidden p-3.5 rounded-xl text-xs font-semibold"></div>
+
+      <form onsubmit="saveAboutUsContent(event); return false;" class="space-y-4 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Gym Name *</label>
+            <input type="text" id="editAboutGymName" required class="w-full bg-slate-900 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange">
+          </div>
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Motto / Tagline</label>
+            <input type="text" id="editAboutTagline" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold uppercase text-slate-400 mb-1">Gym Introduction & Story</label>
+          <textarea id="editAboutIntro" rows="3" class="w-full bg-slate-900 border border-gym-border rounded-xl p-3 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Our Mission</label>
+            <textarea id="editAboutMission" rows="3" class="w-full bg-slate-900 border border-gym-border rounded-xl p-3 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange"></textarea>
+          </div>
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Our Vision</label>
+            <textarea id="editAboutVision" rows="3" class="w-full bg-slate-900 border border-gym-border rounded-xl p-3 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange"></textarea>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold uppercase text-slate-400 mb-1">Facilities & Equipment Highlights</label>
+          <textarea id="editAboutFacilities" rows="3" class="w-full bg-slate-900 border border-gym-border rounded-xl p-3 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Trainers & Coaches</label>
+            <textarea id="editAboutTrainers" rows="3" class="w-full bg-slate-900 border border-gym-border rounded-xl p-3 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange"></textarea>
+          </div>
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Gym Owner & Leadership Message</label>
+            <textarea id="editAboutOwner" rows="3" class="w-full bg-slate-900 border border-gym-border rounded-xl p-3 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange"></textarea>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Phone Number</label>
+            <input type="text" id="editAboutPhone" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange">
+          </div>
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Email Address</label>
+            <input type="email" id="editAboutEmail" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange">
+          </div>
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Operating Timings</label>
+            <input type="text" id="editAboutTimings" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold uppercase text-slate-400 mb-1">Full Address & Landmark</label>
+          <textarea id="editAboutAddress" rows="2" class="w-full bg-slate-900 border border-gym-border rounded-xl p-3 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-bold uppercase text-slate-400 mb-1">Gallery Note / Subtitle</label>
+          <input type="text" id="editAboutGalleryNote" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange">
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-gym-border">
+          <button type="button" onclick="closeEditAboutUsModal()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold uppercase rounded-xl transition">
+            Cancel
+          </button>
+          <button type="submit" id="btnSaveAboutUs" class="px-6 py-2.5 bg-gym-orange hover:bg-gym-orangeHover text-white font-extrabold uppercase rounded-xl shadow-lg shadow-gym-orangeGlow transition flex items-center gap-1.5">
+            <span>💾 Save Changes</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/app.js?v=2.6"></script>
 </body>
 </html>

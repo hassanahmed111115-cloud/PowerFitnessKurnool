@@ -22,7 +22,7 @@ public class PdfReportService {
     private static final Color BORDER_COLOR = new Color(226, 232, 240);
 
     private void addHeader(Document doc, String title, String subtitle) throws DocumentException {
-        Paragraph brand = new Paragraph("POWERFITNESSKURNOOL", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, ORANGE_ACCENT));
+        Paragraph brand = new Paragraph("POWER FITNESS UNISEX GYM KURNOOL", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, ORANGE_ACCENT));
         brand.setAlignment(Element.ALIGN_CENTER);
         doc.add(brand);
 
@@ -249,7 +249,7 @@ public class PdfReportService {
         PdfWriter.getInstance(doc, out);
         doc.open();
 
-        addHeader(doc, "Executive Revenue Summary", "PowerFitnessKurnool Comprehensive Fiscal Report");
+        addHeader(doc, "Executive Revenue Summary", "Power Fitness Unisex GYM Kurnool Comprehensive Fiscal Report");
 
         // Summary Boxes
         PdfPTable sumTable = new PdfPTable(3);

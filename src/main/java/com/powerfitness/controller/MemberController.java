@@ -187,7 +187,7 @@ public class MemberController {
 
         // Notifications
         notificationRepository.save(new Notification(null, "New Member Added", "Member " + saved.getFullName() + " (" + memberCode + ") enrolled successfully.", "NEW_MEMBER"));
-        notificationRepository.save(new Notification(memberUser.getId(), "Welcome to PowerFitnessKurnool!", "Your membership is active until " + expiryDate + ". Let's crush your goals!", "WELCOME"));
+        notificationRepository.save(new Notification(memberUser.getId(), "Welcome to Power Fitness Unisex GYM Kurnool!", "Your membership is active until " + expiryDate + ". Let's crush your goals!", "WELCOME"));
 
         return ResponseEntity.ok(saved);
     }

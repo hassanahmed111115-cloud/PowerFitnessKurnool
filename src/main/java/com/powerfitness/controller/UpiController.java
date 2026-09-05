@@ -30,7 +30,7 @@ public class UpiController {
     public ResponseEntity<?> getUpiSetting() {
         Optional<UpiSetting> settingOpt = upiSettingRepository.findTopByOrderByIdDesc();
         UpiSetting setting = settingOpt.orElseGet(() ->
-            new UpiSetting("powerfitnesskurnool@okaxis", "PowerFitnessKurnool Gym", "/api/upi/qr", "Scan QR to pay")
+            new UpiSetting("powerfitnesskurnool@okaxis", "Power Fitness Unisex GYM Kurnool", "/api/upi/qr", "Scan QR to pay")
         );
         if (setting.getQrCodeUrl() == null || setting.getQrCodeUrl().trim().isEmpty() || setting.getQrCodeUrl().contains("\\") || setting.getQrCodeUrl().startsWith("data:")) {
             setting.setQrCodeUrl("/api/upi/qr");

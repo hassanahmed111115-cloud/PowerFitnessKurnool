@@ -252,7 +252,7 @@ public class DataInitializerService implements CommandLineRunner {
         // 6. Seed UPI Settings
         UpiSetting upi = new UpiSetting(
             "powerfitnesskurnool@okaxis",
-            "PowerFitnessKurnool Gym",
+            "Power Fitness Unisex GYM Kurnool",
             "/uploads/upi/default_upi_qr.png",
             "Scan with Google Pay, PhonePe, Paytm, or BHIM. Send screenshot to admin for instant receipt."
         );
@@ -263,7 +263,7 @@ public class DataInitializerService implements CommandLineRunner {
         notificationRepository.save(new Notification(null, "Payment Received", "Payment of ₹7,300 received via UPI for Member PFK-1004.", "PAYMENT"));
         notificationRepository.save(new Notification(null, "Subscription Expiring Soon", "Member Suresh Reddy (PFK-1002) expires in 5 days.", "EXPIRY"));
         notificationRepository.save(new Notification(user2.getId(), "⚠️ Renewal Required — 5 Days Left", "Your gym membership expires in 5 days. Click here or visit the desk to renew.", "EXPIRY"));
-        notificationRepository.save(new Notification(user1.getId(), "Welcome to PowerFitnessKurnool!", "Build your body. Build your discipline. Track your daily nutrition in the Calories section.", "WELCOME"));
+        notificationRepository.save(new Notification(user1.getId(), "Welcome to Power Fitness Unisex GYM Kurnool!", "Build your body. Build your discipline. Track your daily nutrition in the Calories section.", "WELCOME"));
 
         System.out.println("PowerFitnessKurnool database initialized successfully!");
     }
