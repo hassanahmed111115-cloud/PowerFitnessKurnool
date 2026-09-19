@@ -96,9 +96,20 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Password</label>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Password</label>
+            <button type="button" id="adminForgotPasswordLink" onclick="openForgotPasswordModal()" class="text-xs font-semibold text-gym-orange hover:text-orange-400 hover:underline transition">
+              Forgot Password?
+            </button>
+          </div>
           <div class="relative">
-            <input type="password" id="loginPassword" required oninput="clearLoginError()" class="w-full bg-slate-900/90 border border-gym-border rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange focus:ring-1 focus:ring-gym-orange transition" placeholder="Enter password">
+            <input type="password" id="loginPassword" required oninput="clearLoginError()" class="w-full bg-slate-900/90 border border-gym-border rounded-xl pl-4 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange focus:ring-1 focus:ring-gym-orange transition" placeholder="Enter password" autocomplete="current-password">
+            <button type="button" onclick="togglePasswordVisibility('loginPassword', 'loginEyeIcon')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 rounded-lg focus:outline-none transition" title="Show/Hide Password" aria-label="Toggle password visibility">
+              <svg id="loginEyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -112,9 +123,9 @@
       <div class="mt-8 pt-6 border-t border-gym-border/60">
         <p class="text-[11px] font-bold uppercase tracking-widest text-slate-400 text-center mb-3">Instant Demo Logins</p>
         <div class="grid grid-cols-2 gap-2">
-          <button onclick="fillDemo('admin', 'admin123', 'ADMIN')" class="p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-gym-border text-left transition hover:border-gym-orange">
-            <span class="block text-xs font-bold text-gym-orange">⚡ Gym Owner</span>
-            <span class="block text-[10px] text-slate-400">admin / admin123</span>
+          <button onclick="setLoginTab('ADMIN'); document.getElementById('loginUsername').value='admin'; document.getElementById('loginPassword').value=''; document.getElementById('loginPassword').focus();" class="p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-gym-border text-left transition hover:border-gym-orange">
+            <span class="block text-xs font-bold text-gym-orange">⚡ Admin Portal</span>
+            <span class="block text-[10px] text-slate-400">admin (Secured Login)</span>
           </button>
           <button onclick="fillDemo('9876543210', 'user123', 'USER')" class="p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-gym-border text-left transition hover:border-gym-emerald">
             <span class="block text-xs font-bold text-gym-emerald">⚡ Active Member</span>
@@ -1783,6 +1794,94 @@
         </section>
 
 
+
+        <!-- ================= ADMIN MANAGEMENT ================= -->
+        <section id="viewAdminManagement" class="hidden space-y-6">
+          <!-- Header Banner -->
+          <div class="bg-gradient-to-r from-slate-900 via-gym-card to-slate-900 border border-gym-border rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+            <div>
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gym-orange/15 border border-gym-orange/30 text-gym-orange text-xs font-bold uppercase tracking-wider mb-2">
+                <span>🛡️ Multi-Admin Access Control</span>
+              </div>
+              <h2 class="font-display font-extrabold text-2xl sm:text-3xl uppercase text-white tracking-tight">
+                Admin Management
+              </h2>
+              <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                Manage administrator accounts, assign privileges, reset credentials, and control access permissions.
+              </p>
+            </div>
+            <button onclick="openAddAdminModal()" class="bg-gradient-to-r from-gym-orange to-red-600 hover:from-gym-orangeHover hover:to-red-700 text-white font-bold text-xs uppercase px-5 py-3 rounded-2xl shadow-lg shadow-gym-orangeGlow transition flex items-center justify-center gap-2 flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              <span>+ Add New Admin</span>
+            </button>
+          </div>
+
+          <!-- Quick Stats Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-4 flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-gym-orange/10 border border-gym-orange/30 flex items-center justify-center text-2xl text-gym-orange">
+                👥
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 font-bold uppercase">Total Administrators</span>
+                <h4 id="statTotalAdmins" class="font-display font-bold text-2xl text-white">--</h4>
+              </div>
+            </div>
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-4 flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-gym-emerald/10 border border-gym-emerald/30 flex items-center justify-center text-2xl text-gym-emerald">
+                ✓
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 font-bold uppercase">Active Admins</span>
+                <h4 id="statActiveAdmins" class="font-display font-bold text-2xl text-gym-emerald">--</h4>
+              </div>
+            </div>
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-4 flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-2xl text-blue-400">
+                🔒
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 font-bold uppercase">Security Standard</span>
+                <p class="text-[11px] text-slate-300 font-medium">BCrypt Password Hashing</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Admins List Table -->
+          <div class="bg-gym-card border border-gym-border rounded-2xl overflow-hidden shadow-xl">
+            <div class="p-4 sm:p-5 border-b border-gym-border flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold uppercase tracking-wider text-white">Administrator Accounts</span>
+                <span id="adminCountBadge" class="text-xs bg-slate-800 text-gym-orange px-2.5 py-0.5 rounded-full font-bold">0</span>
+              </div>
+              <button onclick="loadAdminAccounts()" class="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>Refresh List</span>
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs min-w-[700px]">
+                <thead class="bg-slate-950 uppercase font-bold text-slate-400 border-b border-gym-border">
+                  <tr>
+                    <th class="p-3.5">ID</th>
+                    <th class="p-3.5">Administrator</th>
+                    <th class="p-3.5">Username / Email</th>
+                    <th class="p-3.5">Status</th>
+                    <th class="p-3.5">Created Date</th>
+                    <th class="p-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="adminAccountsTableBody" class="divide-y divide-gym-border/50 text-slate-300">
+                  <tr>
+                    <td colspan="6" class="p-8 text-center text-slate-500">Loading administrator accounts...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <!-- ================= ABOUT US (UNIVERSAL) ================= -->
         <section id="viewAboutUs" class="hidden space-y-6">
           <!-- Hero Banner -->
@@ -2706,6 +2805,240 @@ Sunday: 6:00 AM – 11:00 AM</p>
     </div>
   </div>
 
-  <script src="/js/app.js?v=2.6"></script>
+
+  <!-- ================= 6. ADD NEW ADMIN MODAL ================= -->
+  <div id="addAdminModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div class="bg-gym-card border border-gym-border rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-gym-border pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-gym-orange/10 border border-gym-orange/30 flex items-center justify-center text-xl text-gym-orange">
+            🛡️
+          </div>
+          <div>
+            <h4 class="font-display font-bold text-xl uppercase text-white tracking-wide">Create New Admin</h4>
+            <p class="text-xs text-slate-400">Grant administrative access to Power Fitness</p>
+          </div>
+        </div>
+        <button onclick="closeAddAdminModal()" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Feedback Banner -->
+      <div id="addAdminMsg" class="hidden p-3.5 rounded-xl text-xs font-semibold"></div>
+
+      <form onsubmit="submitAddAdmin(event); return false;" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold uppercase text-slate-400 mb-1">Full Name / Display Title *</label>
+          <input type="text" id="newAdminFullName" required placeholder="e.g. Head Trainer / Manager" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange">
+        </div>
+
+        <div>
+          <label class="block font-bold uppercase text-slate-400 mb-1">Username or Email *</label>
+          <input type="text" id="newAdminUsername" required placeholder="e.g. manager1 or admin_kurnool" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange">
+          <span class="text-[10px] text-slate-500 mt-1 block">Must be unique and at least 3 characters.</span>
+        </div>
+
+        <div>
+          <label class="block font-bold uppercase text-slate-400 mb-1">Password * (Min 8 Characters)</label>
+          <div class="relative">
+            <input type="password" id="newAdminPassword" required minlength="8" placeholder="Min 8 characters" class="w-full bg-slate-900 border border-gym-border rounded-xl pl-3.5 pr-10 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange">
+            <button type="button" onclick="togglePasswordVisibility('newAdminPassword', 'newAdminEyeIcon1')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 rounded-lg focus:outline-none transition">
+              <svg id="newAdminEyeIcon1" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold uppercase text-slate-400 mb-1">Confirm Password *</label>
+          <div class="relative">
+            <input type="password" id="newAdminConfirmPassword" required minlength="8" placeholder="Repeat password" class="w-full bg-slate-900 border border-gym-border rounded-xl pl-3.5 pr-10 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange">
+            <button type="button" onclick="togglePasswordVisibility('newAdminConfirmPassword', 'newAdminEyeIcon2')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 rounded-lg focus:outline-none transition">
+              <svg id="newAdminEyeIcon2" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-gym-border">
+          <button type="button" onclick="closeAddAdminModal()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold uppercase rounded-xl transition">
+            Cancel
+          </button>
+          <button type="submit" id="btnSubmitNewAdmin" class="px-6 py-2.5 bg-gym-orange hover:bg-gym-orangeHover text-white font-extrabold uppercase rounded-xl shadow-lg shadow-gym-orangeGlow transition flex items-center gap-1.5">
+            <span>Create Admin</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= 7. RESET ADMIN PASSWORD MODAL ================= -->
+  <div id="resetAdminPasswordModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div class="bg-gym-card border border-gym-border rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-gym-border pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-xl text-amber-400">
+            🔑
+          </div>
+          <div>
+            <h4 class="font-display font-bold text-xl uppercase text-white tracking-wide">Reset Password</h4>
+            <p class="text-xs text-slate-400" id="resetTargetAdminSubtitle">Change administrator password</p>
+          </div>
+        </div>
+        <button onclick="closeResetAdminPasswordModal()" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Feedback Banner -->
+      <div id="resetAdminPasswordMsg" class="hidden p-3.5 rounded-xl text-xs font-semibold"></div>
+
+      <input type="hidden" id="resetTargetAdminId">
+
+      <form onsubmit="submitResetAdminPassword(event); return false;" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold uppercase text-slate-400 mb-1">New Password * (Min 8 Characters)</label>
+          <div class="relative">
+            <input type="password" id="resetAdminNewPassword" required minlength="8" placeholder="Enter new password" class="w-full bg-slate-900 border border-gym-border rounded-xl pl-3.5 pr-10 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange">
+            <button type="button" onclick="togglePasswordVisibility('resetAdminNewPassword', 'resetEyeIcon1')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 rounded-lg focus:outline-none transition">
+              <svg id="resetEyeIcon1" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold uppercase text-slate-400 mb-1">Confirm New Password *</label>
+          <div class="relative">
+            <input type="password" id="resetAdminConfirmPassword" required minlength="8" placeholder="Repeat new password" class="w-full bg-slate-900 border border-gym-border rounded-xl pl-3.5 pr-10 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange">
+            <button type="button" onclick="togglePasswordVisibility('resetAdminConfirmPassword', 'resetEyeIcon2')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 rounded-lg focus:outline-none transition">
+              <svg id="resetEyeIcon2" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-gym-border">
+          <button type="button" onclick="closeResetAdminPasswordModal()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold uppercase rounded-xl transition">
+            Cancel
+          </button>
+          <button type="submit" id="btnSubmitResetPassword" class="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-extrabold uppercase rounded-xl shadow-lg transition flex items-center gap-1.5">
+            <span>Reset Password</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= 8. CONFIRM ACTION MODAL ================= -->
+  <div id="confirmAdminActionModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div class="bg-gym-card border border-gym-border rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl text-center">
+      <div id="confirmActionIconWrapper" class="w-14 h-14 mx-auto rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-2xl text-red-400">
+        ⚠️
+      </div>
+      <h4 id="confirmActionTitle" class="font-display font-bold text-xl uppercase text-white">Confirm Action</h4>
+      <p id="confirmActionMessage" class="text-xs text-slate-300 leading-relaxed">Are you sure you want to proceed?</p>
+
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="closeConfirmAdminAction()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold uppercase transition">Cancel</button>
+        <button type="button" id="confirmActionBtn" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold uppercase shadow-lg transition">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 9. FORGOT PASSWORD MODAL ================= -->
+  <div id="forgotPasswordModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div class="bg-gym-card border border-gym-border rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-gym-border pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-gym-orange/10 border border-gym-orange/30 flex items-center justify-center text-xl text-gym-orange">
+            🔐
+          </div>
+          <div>
+            <h4 class="font-display font-bold text-xl uppercase text-white tracking-wide" id="forgotModalTitle">Account Recovery</h4>
+            <p class="text-xs text-slate-400" id="forgotModalSubtitle">Reset your Power Fitness Admin password</p>
+          </div>
+        </div>
+        <button onclick="closeForgotPasswordModal()" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition" aria-label="Close modal">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Feedback Banner -->
+      <div id="forgotPasswordMsg" class="hidden p-3.5 rounded-xl text-xs font-semibold"></div>
+
+      <!-- STEP 1: Request Reset Token -->
+      <div id="forgotStep1" class="space-y-4">
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Enter your registered administrator username or email address below. We'll generate a secure, single-use recovery token valid for 15 minutes.
+        </p>
+
+        <form onsubmit="submitForgotPasswordRequest(event); return false;" class="space-y-4 text-xs">
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Admin Username or Email *</label>
+            <input type="text" id="forgotUsernameOrEmail" required placeholder="e.g. admin or admin@powerfitness.com" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange text-sm">
+          </div>
+
+          <div class="pt-2 flex flex-col gap-2">
+            <button type="submit" id="btnSubmitForgotRequest" class="w-full py-3 bg-gradient-to-r from-gym-orange to-red-600 hover:from-gym-orangeHover hover:to-red-700 text-white font-extrabold uppercase rounded-xl shadow-lg shadow-gym-orangeGlow transition flex items-center justify-center gap-2 text-xs">
+              <span>Send Recovery Instructions</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+
+            <button type="button" onclick="switchForgotModalStep(2)" class="text-xs font-semibold text-gym-orange hover:text-orange-400 hover:underline py-1 transition text-center">
+              Already have a recovery token? Enter token &amp; reset &rarr;
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- STEP 2: Enter Token & Set New Password -->
+      <div id="forgotStep2" class="hidden space-y-4">
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Enter your 256-bit recovery token and set a new password of at least 8 characters.
+        </p>
+
+        <form onsubmit="submitResetPasswordWithToken(event); return false;" class="space-y-4 text-xs">
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Recovery Token *</label>
+            <input type="text" id="forgotResetToken" required placeholder="Paste reset token here" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange font-mono text-xs">
+          </div>
+
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">New Password * (Min 8 characters)</label>
+            <div class="relative">
+              <input type="password" id="forgotNewPassword" required minlength="8" placeholder="Enter new password" class="w-full bg-slate-900 border border-gym-border rounded-xl pl-3.5 pr-10 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange text-sm">
+              <button type="button" onclick="togglePasswordVisibility('forgotNewPassword', 'forgotEyeIcon1')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 rounded-lg focus:outline-none transition">
+                <svg id="forgotEyeIcon1" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Confirm New Password *</label>
+            <div class="relative">
+              <input type="password" id="forgotConfirmPassword" required minlength="8" placeholder="Repeat new password" class="w-full bg-slate-900 border border-gym-border rounded-xl pl-3.5 pr-10 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gym-orange text-sm">
+              <button type="button" onclick="togglePasswordVisibility('forgotConfirmPassword', 'forgotEyeIcon2')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 rounded-lg focus:outline-none transition">
+                <svg id="forgotEyeIcon2" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-2 flex flex-col gap-2">
+            <button type="submit" id="btnSubmitResetWithToken" class="w-full py-3 bg-gradient-to-r from-gym-orange to-red-600 hover:from-gym-orangeHover hover:to-red-700 text-white font-extrabold uppercase rounded-xl shadow-lg shadow-gym-orangeGlow transition flex items-center justify-center gap-2 text-xs">
+              <span>Save New Password &amp; Log In</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </button>
+
+            <button type="button" onclick="switchForgotModalStep(1)" class="text-xs font-semibold text-slate-400 hover:text-slate-200 py-1 transition text-center">
+              &larr; Request a new recovery token
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/js/app.js?v=2.8"></script>
 </body>
 </html>

@@ -24,6 +24,11 @@ public class User {
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(columnDefinition = "boolean default true")
+    private Boolean enabled = true;
+
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
     public User() {}
 
     public User(String username, String password, String fullName, Role role) {
@@ -31,7 +36,9 @@ public class User {
         this.password = password;
         this.fullName = fullName;
         this.role = role;
+        this.enabled = true;
         this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     public Long getId() { return id; }
@@ -51,4 +58,11 @@ public class User {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public Boolean getEnabled() { return enabled == null ? true : enabled; }
+    public void setEnabled(Boolean enabled) { this.enabled = enabled; }
+    public boolean isEnabled() { return enabled == null || enabled; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt == null ? createdAt : updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

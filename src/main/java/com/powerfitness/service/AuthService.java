@@ -51,6 +51,9 @@ public class AuthService {
         }
 
         User user = userOpt.get();
+        if (!user.isEnabled()) {
+            throw new IllegalArgumentException("This account has been disabled. Please contact the administrator.");
+        }
         String token = "PFK-" + UUID.randomUUID().toString();
         tokenToUserId.put(token, user.getId());
 

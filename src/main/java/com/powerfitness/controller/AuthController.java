@@ -30,6 +30,9 @@ public class AuthController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private com.powerfitness.service.PasswordRecoveryService passwordRecoveryService;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
         try {
@@ -200,5 +203,55 @@ public class AuthController {
         userRepository.save(user);
 
         return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+    }
+
+    // --- Admin: Forgot Password Request ---
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(
+            @RequestBody Map<String, String> body,
+            @RequestHeader(value = "Origin", required = false) String origin,
+            @RequestHeader(value = "Referer", required = false) String referer) {
+        String usernameOrEmail = body != null ? (body.get("usernameOrEmail") != null ? body.get("usernameOrEmail") : body.get("username")) : null;
+        String baseUrl = origin;
+        if (baseUrl == null && referer != null) {
+            try {
+                java.net.URI uri = new java.net.URI(referer);
+                baseUrl = uri.getScheme() + "://" + uri.getAuthority();
+            } catch (Exception ignored) {}
+        }
+        try {
+            Map<String, Object> res = passwordRecoveryService.requestPasswordReset(usernameOrEmail, baseUrl);
+            return ResponseEntity.ok(res);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // --- Admin: Validate Reset Token ---
+    @PostMapping("/validate-reset-token")
+    public ResponseEntity<?> validateResetToken(@RequestBody Map<String, String> body) {
+        String token = body != null ? body.get("token") : null;
+        boolean valid = passwordRecoveryService.validateToken(token);
+        Map<String, Object> res = new HashMap<>();
+        res.put("valid", valid);
+        if (!valid) {
+            res.put("error", "The reset token is invalid, expired, or has already been used.");
+        }
+        return ResponseEntity.ok(res);
+    }
+
+    // --- Admin: Reset Password ---
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
+        String token = body != null ? body.get("token") : null;
+        String newPassword = body != null ? body.get("newPassword") : null;
+        String confirmPassword = body != null ? body.get("confirmPassword") : null;
+
+        try {
+            passwordRecoveryService.resetPassword(token, newPassword, confirmPassword);
+            return ResponseEntity.ok(Map.of("message", "Password has been successfully reset! You can now log in with your new password."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }

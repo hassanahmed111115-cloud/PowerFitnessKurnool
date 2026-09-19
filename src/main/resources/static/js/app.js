@@ -24,6 +24,24 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     showAuthView();
   }
+
+  // Auto-detect reset token in URL parameters (?resetToken=... or ?token=...)
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetTokenParam = urlParams.get('resetToken') || urlParams.get('token');
+    if (resetTokenParam) {
+      setTimeout(() => {
+        openForgotPasswordModal();
+        switchForgotModalStep(2);
+        const tokenInput = document.getElementById('forgotResetToken');
+        if (tokenInput) tokenInput.value = resetTokenParam;
+        const newPwdInput = document.getElementById('forgotNewPassword');
+        if (newPwdInput) newPwdInput.focus();
+      }, 300);
+    }
+  } catch (e) {
+    console.error('Error checking reset token parameter:', e);
+  }
 });
 
 function initDateInputs() {
@@ -80,17 +98,20 @@ function setLoginTab(role) {
   const tabUser = document.getElementById('tabUser');
   const userLabel = document.getElementById('usernameLabel');
   const userInput = document.getElementById('loginUsername');
+  const forgotLink = document.getElementById('adminForgotPasswordLink');
 
   if (role === 'ADMIN') {
     tabAdmin.className = 'flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 bg-gym-orange text-white shadow';
     tabUser.className = 'flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 text-slate-400 hover:text-white';
     if (userLabel) userLabel.textContent = 'Admin Username';
     if (userInput) userInput.placeholder = 'e.g. admin';
+    if (forgotLink) forgotLink.classList.remove('hidden');
   } else {
     tabUser.className = 'flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 bg-gym-orange text-white shadow';
     tabAdmin.className = 'flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 text-slate-400 hover:text-white';
     if (userLabel) userLabel.textContent = 'Member Phone Number';
     if (userInput) userInput.placeholder = 'e.g. 9876543210';
+    if (forgotLink) forgotLink.classList.add('hidden');
   }
 }
 
@@ -311,6 +332,7 @@ function renderSidebarLinks(role) {
       { id: 'collectionHistory', label: 'Collection History', icon: '📋' },
       { id: 'upi', label: 'UPI / QR Code', icon: '📱' },
       { id: 'reports', label: 'Reports', icon: '📈' },
+      { id: 'adminManagement', label: 'Admin Management', icon: '🛡️' },
       { id: 'aboutUs', label: 'About Us', icon: 'ℹ️' }
     ];
   } else {
@@ -391,7 +413,7 @@ function navigateTo(viewId) {
     'viewPayments', 'viewSupplements', 'viewSupplementOrders', 'viewCollectionHistory',
     'viewUpi', 'viewReports',
     'viewUserDashboard', 'viewUserProfile', 'viewCalories', 'viewUserOrders',
-    'viewUserCollectionHistory', 'viewUserPayments', 'viewAboutUs'
+    'viewUserCollectionHistory', 'viewUserPayments', 'viewAboutUs', 'viewAdminManagement'
   ];
   views.forEach(v => {
     const el = document.getElementById(v);
@@ -419,6 +441,7 @@ function navigateTo(viewId) {
     userOrders: ['My Supplement Orders', 'Track Online Purchases & Front Desk Collection Status'],
     userCollectionHistory: ['My Collection History', 'Hand-over Receipts with Physical Collection Photos'],
     userPayments: ['My Payments & Fees', 'Scan QR Code & Submit Payment UTR'],
+    adminManagement: ['Admin Management', 'Multi-Admin Access Control & Privilege Management'],
     aboutUs: ['About Us', 'Power Fitness Unisex GYM Kurnool — Story, Vision & Facilities']
   };
 
@@ -446,6 +469,7 @@ function navigateTo(viewId) {
     userOrders: 'viewUserOrders',
     userCollectionHistory: 'viewUserCollectionHistory',
     userPayments: 'viewUserPayments',
+    adminManagement: 'viewAdminManagement',
     aboutUs: 'viewAboutUs'
   };
 
@@ -474,6 +498,7 @@ function navigateTo(viewId) {
       case 'userOrders': loadUserOrders(); break;
       case 'userCollectionHistory': loadUserCollectionHistory(); break;
       case 'userPayments': loadUserPayments(); break;
+      case 'adminManagement': loadAdminAccounts(); break;
       case 'aboutUs': loadAboutUs(); break;
     }
   } catch (e) {
@@ -3901,3 +3926,608 @@ async function saveAboutUsContent(e) {
     }
   }
 }
+
+
+// ================= PASSWORD VISIBILITY TOGGLER =================
+function togglePasswordVisibility(inputId, iconId) {
+  const input = document.getElementById(inputId);
+  const icon = document.getElementById(iconId);
+  if (!input) return;
+
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (icon) {
+      icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/>';
+    }
+  } else {
+    input.type = 'password';
+    if (icon) {
+      icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+    }
+  }
+}
+
+// ================= ADMIN MANAGEMENT CONTROLLER =================
+STATE.adminAccounts = [];
+
+async function loadAdminAccounts() {
+  if (!STATE.user || STATE.user.role !== 'ADMIN') return;
+  const tbody = document.getElementById('adminAccountsTableBody');
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-500">Loading administrator accounts...</td></tr>';
+  }
+
+  try {
+    const res = await fetch('/api/admin/accounts', {
+      headers: {
+        'Authorization': 'Bearer ' + STATE.token
+      }
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to load administrator accounts');
+    }
+
+    const admins = await res.json();
+    STATE.adminAccounts = admins;
+    renderAdminAccountsTable(admins);
+  } catch (err) {
+    console.error('Error loading admin accounts:', err);
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-red-400 font-semibold">${err.message || 'Error loading administrators'}</td></tr>`;
+    }
+  }
+}
+
+function renderAdminAccountsTable(admins) {
+  const tbody = document.getElementById('adminAccountsTableBody');
+  const countBadge = document.getElementById('adminCountBadge');
+  const statTotal = document.getElementById('statTotalAdmins');
+  const statActive = document.getElementById('statActiveAdmins');
+
+  if (countBadge) countBadge.textContent = admins.length;
+  if (statTotal) statTotal.textContent = admins.length;
+
+  const activeCount = admins.filter(a => a.enabled).length;
+  if (statActive) statActive.textContent = activeCount;
+
+  if (!tbody) return;
+  if (!admins || admins.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-500">No administrator accounts found.</td></tr>';
+    return;
+  }
+
+  const currentUserId = STATE.user ? STATE.user.userId : null;
+
+  tbody.innerHTML = admins.map(admin => {
+    const isSelf = currentUserId && (String(currentUserId) === String(admin.id));
+    const createdStr = admin.createdAt ? new Date(admin.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '--';
+
+    const statusBadge = admin.enabled
+      ? '<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-gym-emerald/20 text-gym-emerald border border-gym-emerald/40">ACTIVE</span>'
+      : '<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-gym-crimson/20 text-gym-crimson border border-gym-crimson/40">DISABLED</span>';
+
+    // Safe Action Rules
+    const canDelete = !isSelf && (admins.length > 1) && (!admin.enabled || activeCount > 1);
+    const canToggle = !isSelf && (!admin.enabled || activeCount > 1);
+
+    const toggleBtnText = admin.enabled ? '🔴 Disable' : '🟢 Enable';
+    const toggleBtnClass = admin.enabled
+      ? 'hover:bg-amber-950/80 hover:text-amber-300 hover:border-amber-700/60'
+      : 'hover:bg-emerald-950/80 hover:text-emerald-300 hover:border-emerald-700/60';
+
+    return `
+      <tr class="hover:bg-slate-900/60 transition">
+        <td class="p-3.5 font-mono text-slate-400">#${admin.id}</td>
+        <td class="p-3.5">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-gym-orange/10 border border-gym-orange/30 flex items-center justify-center font-bold text-gym-orange text-xs flex-shrink-0">
+              ${(admin.fullName || admin.username).charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-white text-sm">${admin.fullName || 'Administrator'}</span>
+                ${isSelf ? '<span class="bg-gym-orange/20 text-gym-orange text-[9px] font-extrabold px-1.5 py-0.5 rounded border border-gym-orange/40">YOU</span>' : ''}
+              </div>
+              <span class="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Admin Role</span>
+            </div>
+          </div>
+        </td>
+        <td class="p-3.5 font-mono font-bold text-slate-200">${admin.username}</td>
+        <td class="p-3.5">${statusBadge}</td>
+        <td class="p-3.5 text-slate-400">${createdStr}</td>
+        <td class="p-3.5 text-right">
+          <div class="inline-flex items-center gap-1.5 justify-end">
+            <button onclick="openResetAdminPasswordModal(${admin.id}, '${admin.username}', '${(admin.fullName || '').replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-gym-border text-slate-300 hover:text-white transition text-[11px] font-bold" title="Reset Administrator Password">
+              🔑 Reset Password
+            </button>
+
+            ${canToggle ? `
+              <button onclick="toggleAdminStatus(${admin.id}, ${admin.enabled}, '${admin.username}')" class="px-2.5 py-1.5 rounded-lg bg-slate-800 border border-gym-border text-slate-300 transition text-[11px] font-bold ${toggleBtnClass}" title="Toggle Account Access">
+                ${toggleBtnText}
+              </button>
+            ` : `
+              <button disabled class="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-gym-border/40 text-slate-600 text-[11px] font-bold cursor-not-allowed" title="${isSelf ? 'Cannot disable your own account' : 'Cannot disable the last active administrator'}">
+                ${toggleBtnText}
+              </button>
+            `}
+
+            ${canDelete ? `
+              <button onclick="deleteAdminAccount(${admin.id}, '${admin.username}')" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-red-950/80 border border-gym-border hover:border-red-700/60 text-slate-400 hover:text-red-300 transition text-[11px] font-bold" title="Permanently Delete Administrator">
+                🗑️
+              </button>
+            ` : `
+              <button disabled class="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-gym-border/40 text-slate-600 text-[11px] font-bold cursor-not-allowed" title="${isSelf ? 'Cannot delete your own account' : 'Cannot delete the last administrator'}">
+                🗑️
+              </button>
+            `}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function openAddAdminModal() {
+  const modal = document.getElementById('addAdminModal');
+  const msg = document.getElementById('addAdminMsg');
+  const fn = document.getElementById('newAdminFullName');
+  const un = document.getElementById('newAdminUsername');
+  const pw = document.getElementById('newAdminPassword');
+  const cpw = document.getElementById('newAdminConfirmPassword');
+
+  if (fn) fn.value = '';
+  if (un) un.value = '';
+  if (pw) { pw.value = ''; pw.type = 'password'; }
+  if (cpw) { cpw.value = ''; cpw.type = 'password'; }
+  if (msg) { msg.classList.add('hidden'); msg.textContent = ''; }
+
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeAddAdminModal() {
+  const modal = document.getElementById('addAdminModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function submitAddAdmin(e) {
+  if (e && e.preventDefault) e.preventDefault();
+
+  const fullName = (document.getElementById('newAdminFullName')?.value || '').trim();
+  const username = (document.getElementById('newAdminUsername')?.value || '').trim();
+  const password = document.getElementById('newAdminPassword')?.value || '';
+  const confirmPassword = document.getElementById('newAdminConfirmPassword')?.value || '';
+  const msg = document.getElementById('addAdminMsg');
+  const btn = document.getElementById('btnSubmitNewAdmin');
+
+  const showMsg = (text, isError) => {
+    if (!msg) return;
+    msg.className = isError
+      ? 'p-3.5 rounded-xl text-xs font-semibold bg-red-950/80 border border-red-500/60 text-red-200'
+      : 'p-3.5 rounded-xl text-xs font-semibold bg-emerald-950/80 border border-emerald-500/60 text-emerald-200';
+    msg.textContent = text;
+    msg.classList.remove('hidden');
+  };
+
+  if (!username || username.length < 3) {
+    showMsg('Username or email must be at least 3 characters long', true);
+    return;
+  }
+  if (!password || password.length < 8) {
+    showMsg('Password must be at least 8 characters long', true);
+    return;
+  }
+  if (password !== confirmPassword) {
+    showMsg('Passwords do not match', true);
+    return;
+  }
+
+  const originalBtn = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span>Creating...</span>'; }
+
+  try {
+    const res = await fetch('/api/admin/accounts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + STATE.token
+      },
+      body: JSON.stringify({ fullName, username, password, confirmPassword })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to create administrator');
+    }
+
+    showToast(`Administrator ${username} created successfully!`, 'success');
+    closeAddAdminModal();
+    loadAdminAccounts();
+  } catch (err) {
+    console.error('Error creating admin:', err);
+    showMsg(err.message || 'Error creating administrator', true);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = originalBtn; }
+  }
+}
+
+function openResetAdminPasswordModal(adminId, username, fullName) {
+  const modal = document.getElementById('resetAdminPasswordModal');
+  const targetId = document.getElementById('resetTargetAdminId');
+  const subtitle = document.getElementById('resetTargetAdminSubtitle');
+  const np = document.getElementById('resetAdminNewPassword');
+  const cnp = document.getElementById('resetAdminConfirmPassword');
+  const msg = document.getElementById('resetAdminPasswordMsg');
+
+  if (targetId) targetId.value = adminId;
+  if (subtitle) subtitle.textContent = `Resetting password for ${fullName || username} (${username})`;
+  if (np) { np.value = ''; np.type = 'password'; }
+  if (cnp) { cnp.value = ''; cnp.type = 'password'; }
+  if (msg) { msg.classList.add('hidden'); msg.textContent = ''; }
+
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeResetAdminPasswordModal() {
+  const modal = document.getElementById('resetAdminPasswordModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function submitResetAdminPassword(e) {
+  if (e && e.preventDefault) e.preventDefault();
+
+  const adminId = document.getElementById('resetTargetAdminId')?.value;
+  const newPassword = document.getElementById('resetAdminNewPassword')?.value || '';
+  const confirmPassword = document.getElementById('resetAdminConfirmPassword')?.value || '';
+  const msg = document.getElementById('resetAdminPasswordMsg');
+  const btn = document.getElementById('btnSubmitResetPassword');
+
+  const showMsg = (text, isError) => {
+    if (!msg) return;
+    msg.className = isError
+      ? 'p-3.5 rounded-xl text-xs font-semibold bg-red-950/80 border border-red-500/60 text-red-200'
+      : 'p-3.5 rounded-xl text-xs font-semibold bg-emerald-950/80 border border-emerald-500/60 text-emerald-200';
+    msg.textContent = text;
+    msg.classList.remove('hidden');
+  };
+
+  if (!newPassword || newPassword.length < 8) {
+    showMsg('Password must be at least 8 characters long', true);
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    showMsg('Passwords do not match', true);
+    return;
+  }
+
+  const originalBtn = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span>Updating...</span>'; }
+
+  try {
+    const res = await fetch(`/api/admin/accounts/${adminId}/password`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + STATE.token
+      },
+      body: JSON.stringify({ newPassword, confirmPassword })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to reset password');
+    }
+
+    showToast('Administrator password reset successfully!', 'success');
+    closeResetAdminPasswordModal();
+  } catch (err) {
+    console.error('Error resetting admin password:', err);
+    showMsg(err.message || 'Error resetting password', true);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = originalBtn; }
+  }
+}
+
+let confirmActionCallback = null;
+
+function openConfirmAdminAction(title, message, confirmBtnText, isDanger, onConfirm) {
+  const modal = document.getElementById('confirmAdminActionModal');
+  const titleEl = document.getElementById('confirmActionTitle');
+  const msgEl = document.getElementById('confirmActionMessage');
+  const btn = document.getElementById('confirmActionBtn');
+  const icon = document.getElementById('confirmActionIconWrapper');
+
+  if (titleEl) titleEl.textContent = title;
+  if (msgEl) msgEl.textContent = message;
+  if (btn) {
+    btn.textContent = confirmBtnText || 'Confirm';
+    btn.className = isDanger
+      ? 'flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold uppercase shadow-lg transition'
+      : 'flex-1 py-2.5 bg-gym-orange hover:bg-gym-orangeHover text-white rounded-xl text-xs font-bold uppercase shadow-lg transition';
+  }
+  if (icon) {
+    icon.className = isDanger
+      ? 'w-14 h-14 mx-auto rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-2xl text-red-400'
+      : 'w-14 h-14 mx-auto rounded-2xl bg-gym-orange/10 border border-gym-orange/30 flex items-center justify-center text-2xl text-gym-orange';
+  }
+
+  confirmActionCallback = onConfirm;
+  if (btn) {
+    btn.onclick = () => {
+      if (confirmActionCallback) confirmActionCallback();
+      closeConfirmAdminAction();
+    };
+  }
+
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeConfirmAdminAction() {
+  const modal = document.getElementById('confirmAdminActionModal');
+  if (modal) modal.classList.add('hidden');
+  confirmActionCallback = null;
+}
+
+function toggleAdminStatus(adminId, currentStatus, username) {
+  const nextStatus = !currentStatus;
+  const actionWord = nextStatus ? 'Enable' : 'Disable';
+  const isDanger = !nextStatus;
+
+  openConfirmAdminAction(
+    `${actionWord} Administrator`,
+    `Are you sure you want to ${actionWord.toLowerCase()} admin account '${username}'? ${nextStatus ? 'They will be able to log in.' : 'They will be prevented from logging in immediately.'}`,
+    `${actionWord} Account`,
+    isDanger,
+    async () => {
+      try {
+        const res = await fetch(`/api/admin/accounts/${adminId}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + STATE.token
+          },
+          body: JSON.stringify({ enabled: nextStatus })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || `Failed to ${actionWord.toLowerCase()} administrator`);
+        }
+
+        showToast(data.message || `Administrator ${actionWord.toLowerCase()}d successfully`, 'success');
+        loadAdminAccounts();
+      } catch (err) {
+        console.error('Error toggling admin status:', err);
+        showToast(err.message || 'Error updating status', 'error');
+      }
+    }
+  );
+}
+
+function deleteAdminAccount(adminId, username) {
+  openConfirmAdminAction(
+    'Delete Administrator',
+    `Are you sure you want to permanently delete administrator account '${username}'? This action cannot be undone.`,
+    'Delete Permanently',
+    true,
+    async () => {
+      try {
+        const res = await fetch(`/api/admin/accounts/${adminId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': 'Bearer ' + STATE.token
+          }
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to delete administrator');
+        }
+
+        showToast(`Administrator '${username}' deleted permanently`, 'success');
+        loadAdminAccounts();
+      } catch (err) {
+        console.error('Error deleting admin:', err);
+        showToast(err.message || 'Error deleting administrator', 'error');
+      }
+    }
+  );
+}
+
+// ================= FORGOT PASSWORD / ACCOUNT RECOVERY =================
+function openForgotPasswordModal() {
+  const modal = document.getElementById('forgotPasswordModal');
+  if (!modal) return;
+  
+  const msg = document.getElementById('forgotPasswordMsg');
+  if (msg) {
+    msg.className = 'hidden p-3.5 rounded-xl text-xs font-semibold';
+    msg.textContent = '';
+  }
+  const uInput = document.getElementById('forgotUsernameOrEmail');
+  if (uInput) {
+    const loginUser = document.getElementById('loginUsername');
+    if (loginUser && loginUser.value.trim() && STATE.loginTab === 'ADMIN') {
+      uInput.value = loginUser.value.trim();
+    } else {
+      uInput.value = '';
+    }
+  }
+  const tInput = document.getElementById('forgotResetToken');
+  if (tInput) tInput.value = '';
+  const p1 = document.getElementById('forgotNewPassword');
+  if (p1) p1.value = '';
+  const p2 = document.getElementById('forgotConfirmPassword');
+  if (p2) p2.value = '';
+
+  switchForgotModalStep(1);
+  modal.classList.remove('hidden');
+  if (uInput) setTimeout(() => uInput.focus(), 100);
+}
+
+function closeForgotPasswordModal() {
+  const modal = document.getElementById('forgotPasswordModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function switchForgotModalStep(step) {
+  const s1 = document.getElementById('forgotStep1');
+  const s2 = document.getElementById('forgotStep2');
+  const title = document.getElementById('forgotModalTitle');
+  const subtitle = document.getElementById('forgotModalSubtitle');
+  const msg = document.getElementById('forgotPasswordMsg');
+  if (msg) {
+    msg.className = 'hidden p-3.5 rounded-xl text-xs font-semibold';
+    msg.textContent = '';
+  }
+
+  if (step === 1) {
+    if (s1) s1.classList.remove('hidden');
+    if (s2) s2.classList.add('hidden');
+    if (title) title.textContent = 'Account Recovery';
+    if (subtitle) subtitle.textContent = 'Reset your Power Fitness Admin password';
+  } else {
+    if (s1) s1.classList.add('hidden');
+    if (s2) s2.classList.remove('hidden');
+    if (title) title.textContent = 'Set New Password';
+    if (subtitle) subtitle.textContent = 'Enter recovery token and your new password';
+  }
+}
+
+async function submitForgotPasswordRequest(event) {
+  if (event) event.preventDefault();
+  const input = document.getElementById('forgotUsernameOrEmail');
+  const msg = document.getElementById('forgotPasswordMsg');
+  const btn = document.getElementById('btnSubmitForgotRequest');
+  if (!input || !input.value.trim()) return;
+
+  const originalBtn = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Processing...';
+  }
+
+  try {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usernameOrEmail: input.value.trim() })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to request password reset');
+    }
+
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 block';
+      let infoText = data.message || 'If an administrator account with that username/email exists, password reset instructions have been generated.';
+      if (data.devResetToken) {
+        infoText += ` (Direct Token: ${data.devResetToken})`;
+        const tInput = document.getElementById('forgotResetToken');
+        if (tInput) tInput.value = data.devResetToken;
+      }
+      msg.textContent = infoText;
+    }
+
+    setTimeout(() => {
+      switchForgotModalStep(2);
+      if (data.devResetToken) {
+        const tInput = document.getElementById('forgotResetToken');
+        if (tInput) tInput.value = data.devResetToken;
+        const p1 = document.getElementById('forgotNewPassword');
+        if (p1) p1.focus();
+      } else {
+        const tInput = document.getElementById('forgotResetToken');
+        if (tInput) tInput.focus();
+      }
+    }, 2200);
+
+  } catch (err) {
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
+      msg.textContent = err.message || 'An error occurred while requesting password reset.';
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtn;
+    }
+  }
+}
+
+async function submitResetPasswordWithToken(event) {
+  if (event) event.preventDefault();
+  const tokenInput = document.getElementById('forgotResetToken');
+  const p1Input = document.getElementById('forgotNewPassword');
+  const p2Input = document.getElementById('forgotConfirmPassword');
+  const msg = document.getElementById('forgotPasswordMsg');
+  const btn = document.getElementById('btnSubmitResetWithToken');
+
+  const token = tokenInput ? tokenInput.value.trim() : '';
+  const newPassword = p1Input ? p1Input.value : '';
+  const confirmPassword = p2Input ? p2Input.value : '';
+
+  if (!token) {
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
+      msg.textContent = 'Please enter your recovery token.';
+    }
+    return;
+  }
+  if (!newPassword || newPassword.length < 8) {
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
+      msg.textContent = 'New password must be at least 8 characters long.';
+    }
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
+      msg.textContent = 'Passwords do not match.';
+    }
+    return;
+  }
+
+  const originalBtn = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Resetting...';
+  }
+
+  try {
+    const res = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, newPassword, confirmPassword })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to reset password');
+    }
+
+    showToast('Admin password reset successfully! You can now log in.', 'success');
+    closeForgotPasswordModal();
+
+    const loginPwd = document.getElementById('loginPassword');
+    if (loginPwd) {
+      loginPwd.value = '';
+      loginPwd.focus();
+    }
+
+  } catch (err) {
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
+      msg.textContent = err.message || 'An error occurred while resetting password.';
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtn;
+    }
+  }
+}
+
