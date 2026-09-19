@@ -15,7 +15,6 @@ public class UpiSetting {
     @Column(nullable = false)
     private String merchantName;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String qrCodeUrl;
 
