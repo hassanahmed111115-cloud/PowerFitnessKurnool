@@ -78,10 +78,19 @@ public class SubscriptionService {
         Member updated = memberRepository.save(member);
 
         // Record payment
+        long recSuffix = System.currentTimeMillis() % 10000000;
+        String receiptNumber = "REC-" + String.format("%07d", recSuffix);
+        while (paymentRepository.findByReceiptNumber(receiptNumber).isPresent()) {
+            recSuffix = (recSuffix + 1) % 10000000;
+            receiptNumber = "REC-" + String.format("%07d", recSuffix);
+        }
+
         Payment payment = new Payment();
-        String receiptNumber = "REC-" + System.currentTimeMillis() % 10000000;
         payment.setReceiptNumber(receiptNumber);
         payment.setMember(updated);
+        payment.setMemberName(updated.getFullName());
+        payment.setMemberCode(updated.getMemberCode());
+        payment.setMemberPhone(updated.getPhoneNumber());
         payment.setBatch(updated.getBatch());
         payment.setPaymentType("MEMBERSHIP");
         payment.setAmount(totalFee);

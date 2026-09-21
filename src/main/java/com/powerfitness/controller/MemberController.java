@@ -95,6 +95,30 @@ public class MemberController {
         return ResponseEntity.ok(list);
     }
 
+    // Helper: generate next unique Member Code safely
+    private synchronized String generateNextMemberCode() {
+        List<String> codes = memberRepository.findAllMemberCodes();
+        long maxNumber = 1000;
+        for (String code : codes) {
+            if (code != null && code.startsWith("PFK-")) {
+                try {
+                    long num = Long.parseLong(code.substring(4).trim());
+                    if (num > maxNumber) {
+                        maxNumber = num;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        long nextNumber = Math.max(maxNumber + 1, memberRepository.count() + 1001);
+        String candidate = "PFK-" + nextNumber;
+        while (memberRepository.existsByMemberCode(candidate)) {
+            nextNumber++;
+            candidate = "PFK-" + nextNumber;
+        }
+        return candidate;
+    }
+
     // --- Admin: Admission (Add Member) ---
     @PostMapping("/admin/members")
     public ResponseEntity<?> addMember(
@@ -110,10 +134,11 @@ public class MemberController {
         if (req.getFullName() == null || req.getFullName().trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Full Name is required"));
         }
-        if (req.getPhoneNumber() == null || !req.getPhoneNumber().matches("^[0-9]{10}$")) {
+        if (req.getPhoneNumber() == null || !req.getPhoneNumber().trim().matches("^[0-9]{10}$")) {
             return ResponseEntity.badRequest().body(Map.of("error", "Please provide a valid 10-digit Indian phone number"));
         }
-        if (memberRepository.findByPhoneNumber(req.getPhoneNumber()).isPresent()) {
+        String phone = req.getPhoneNumber().trim();
+        if (memberRepository.findByPhoneNumber(phone).isPresent()) {
             return ResponseEntity.badRequest().body(Map.of("error", "A member with this phone number already exists"));
         }
 
@@ -132,64 +157,80 @@ public class MemberController {
         int durationDays = pricingService.getPlanDurationDays(plan);
         LocalDate expiryDate = admissionDate.plusDays(durationDays);
 
-        // Generate Member Code
-        long count = memberRepository.count() + 1001;
-        String memberCode = "PFK-" + count;
+        // Generate Member Code uniquely
+        String memberCode = generateNextMemberCode();
 
         // Create or Link User
-        String phone = req.getPhoneNumber().trim();
         User memberUser = userRepository.findByUsername(phone).orElseGet(() -> {
-            User u = new User(phone, authService.hashPassword("user123"), req.getFullName(), Role.USER);
+            User u = new User(phone, authService.hashPassword("user123"), req.getFullName().trim(), Role.USER);
             return userRepository.save(u);
         });
+
+        if (memberRepository.findByUserId(memberUser.getId()).isPresent()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "A member account is already associated with this user"));
+        }
 
         // Photo URL fallback
         String photo = (req.getPhotoUrl() != null && !req.getPhotoUrl().trim().isEmpty())
                 ? req.getPhotoUrl().trim()
                 : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
 
-        Member member = new Member();
-        member.setMemberCode(memberCode);
-        member.setFullName(req.getFullName().trim());
-        member.setPhoneNumber(phone);
-        member.setPhotoUrl(photo);
-        member.setAdmissionDate(admissionDate);
-        member.setSubscriptionPlan(plan);
-        member.setTrainingCategory(category);
-        member.setBatch(batch);
-        member.setHasCardio(cardio);
-        member.setTotalFee(totalFee);
-        member.setStartDate(admissionDate);
-        member.setExpiryDate(expiryDate);
-        member.setStatus("ACTIVE");
-        member.setNotes(req.getNotes());
-        member.setUser(memberUser);
+        try {
+            Member member = new Member();
+            member.setMemberCode(memberCode);
+            member.setFullName(req.getFullName().trim());
+            member.setPhoneNumber(phone);
+            member.setPhotoUrl(photo);
+            member.setAdmissionDate(admissionDate);
+            member.setSubscriptionPlan(plan);
+            member.setTrainingCategory(category);
+            member.setBatch(batch);
+            member.setHasCardio(cardio);
+            member.setTotalFee(totalFee);
+            member.setStartDate(admissionDate);
+            member.setExpiryDate(expiryDate);
+            member.setStatus("ACTIVE");
+            member.setNotes(req.getNotes());
+            member.setUser(memberUser);
 
-        subscriptionService.updateMemberSubscriptionStatus(member);
-        Member saved = memberRepository.save(member);
+            subscriptionService.updateMemberSubscriptionStatus(member);
+            Member saved = memberRepository.save(member);
 
-        // Record Initial Payment
-        Payment p = new Payment();
-        p.setReceiptNumber("REC-" + System.currentTimeMillis() % 10000000);
-        p.setMember(saved);
-        p.setBatch(saved.getBatch());
-        p.setPaymentType("MEMBERSHIP");
-        p.setAmount(totalFee);
-        p.setBaseFee(baseFee);
-        p.setCardioFee(cardioFee);
-        p.setPaymentDate(admissionDate);
-        p.setPaymentMethod(req.getPaymentMethod() != null ? req.getPaymentMethod() : "UPI");
-        p.setSubscriptionPlan(plan);
-        p.setPaymentStatus(req.getPaymentStatus() != null ? req.getPaymentStatus() : "Paid");
-        p.setTransactionRef(req.getTransactionRef());
-        p.setNotes("New Admission: " + plan + (cardio ? " + Cardio" : ""));
-        paymentRepository.save(p);
+            // Record Initial Payment with unique receipt number
+            long recSuffix = System.currentTimeMillis() % 10000000;
+            String receiptNumber = "REC-" + String.format("%07d", recSuffix);
+            while (paymentRepository.findByReceiptNumber(receiptNumber).isPresent()) {
+                recSuffix = (recSuffix + 1) % 10000000;
+                receiptNumber = "REC-" + String.format("%07d", recSuffix);
+            }
 
-        // Notifications
-        notificationRepository.save(new Notification(null, "New Member Added", "Member " + saved.getFullName() + " (" + memberCode + ") enrolled successfully.", "NEW_MEMBER"));
-        notificationRepository.save(new Notification(memberUser.getId(), "Welcome to Power Fitness Unisex GYM Kurnool!", "Your membership is active until " + expiryDate + ". Let's crush your goals!", "WELCOME"));
+            Payment p = new Payment();
+            p.setReceiptNumber(receiptNumber);
+            p.setMember(saved);
+            p.setMemberName(saved.getFullName());
+            p.setMemberCode(saved.getMemberCode());
+            p.setMemberPhone(saved.getPhoneNumber());
+            p.setBatch(saved.getBatch());
+            p.setPaymentType("MEMBERSHIP");
+            p.setAmount(totalFee);
+            p.setBaseFee(baseFee);
+            p.setCardioFee(cardioFee);
+            p.setPaymentDate(admissionDate);
+            p.setPaymentMethod(req.getPaymentMethod() != null ? req.getPaymentMethod() : "UPI");
+            p.setSubscriptionPlan(plan);
+            p.setPaymentStatus(req.getPaymentStatus() != null ? req.getPaymentStatus() : "Paid");
+            p.setTransactionRef(req.getTransactionRef());
+            p.setNotes("New Admission: " + plan + (cardio ? " + Cardio" : ""));
+            paymentRepository.save(p);
 
-        return ResponseEntity.ok(saved);
+            // Notifications
+            notificationRepository.save(new Notification(null, "New Member Added", "Member " + saved.getFullName() + " (" + memberCode + ") enrolled successfully.", "NEW_MEMBER"));
+            notificationRepository.save(new Notification(memberUser.getId(), "Welcome to Power Fitness Unisex GYM Kurnool!", "Your membership is active until " + expiryDate + ". Let's crush your goals!", "WELCOME"));
+
+            return ResponseEntity.ok(saved);
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(Map.of("error", "Admission failed: " + ex.getMessage()));
+        }
     }
 
     // --- Admin: Get Member Details ---

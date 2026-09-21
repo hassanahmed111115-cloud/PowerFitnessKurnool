@@ -12,6 +12,11 @@ import java.util.Optional;
 @Repository
 public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByMemberCode(String memberCode);
+    boolean existsByMemberCode(String memberCode);
+
+    @Query("SELECT m.memberCode FROM Member m WHERE m.memberCode LIKE 'PFK-%'")
+    List<String> findAllMemberCodes();
+
     Optional<Member> findByPhoneNumber(String phoneNumber);
     Optional<Member> findByUserId(Long userId);
     List<Member> findByBatch(String batch);

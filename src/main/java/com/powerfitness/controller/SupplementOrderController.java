@@ -102,6 +102,10 @@ public class SupplementOrderController {
         // Generate unique Order Number
         long count = orderRepository.count() + 1;
         String orderNumber = "PFK-SUP-" + String.format("%04d", count);
+        while (orderRepository.findByOrderNumber(orderNumber).isPresent()) {
+            count++;
+            orderNumber = "PFK-SUP-" + String.format("%04d", count);
+        }
 
         String paymentStatus = "PENDING";
         String orderStatus = "PAYMENT_PENDING";
@@ -411,6 +415,10 @@ public class SupplementOrderController {
         // 3. Create Permanent Collection Record
         long colCount = collectionRepository.count() + 1;
         String collectionNumber = "PFK-COL-" + String.format("%04d", colCount);
+        while (collectionRepository.findByCollectionNumber(collectionNumber).isPresent()) {
+            colCount++;
+            collectionNumber = "PFK-COL-" + String.format("%04d", colCount);
+        }
 
         SupplementCollection collection = new SupplementCollection(
             collectionNumber,
