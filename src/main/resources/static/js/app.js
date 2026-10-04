@@ -650,21 +650,18 @@ function setPresetPhoto(url) {
 function recalculateAdmissionFee() {
   const selectedPlan = document.querySelector('input[name="subPlan"]:checked')?.value || '1 Month';
   const hasCardio = document.getElementById('admissionCardioOption')?.checked || false;
+  const customPriceInput = document.getElementById('admissionCustomPrice');
+  const customVal = customPriceInput ? parseFloat(customPriceInput.value) : NaN;
 
-  const basePriceMap = {
-    '1 Month': 800,
-    '3 Months': 1800,
-    '6 Months': 3500,
-    '1 Year': 6800
-  };
-
-  const baseFee = basePriceMap[selectedPlan] || 800;
-  const cardioFee = hasCardio ? 500 : 0;
-  const total = baseFee + cardioFee;
-
-  document.getElementById('admissionFinalAmount').textContent = formatInr(total);
-  document.getElementById('admissionCalculationBreakdown').textContent =
-    `Plan: ₹${baseFee.toLocaleString()} + Cardio: ₹${cardioFee.toLocaleString()}`;
+  if (!isNaN(customVal) && customVal > 0) {
+    document.getElementById('admissionFinalAmount').textContent = formatInr(customVal);
+    document.getElementById('admissionCalculationBreakdown').textContent =
+      `Custom Price: ₹${customVal.toLocaleString()} (Plan: ${selectedPlan}${hasCardio ? ' + Cardio' : ''})`;
+  } else {
+    document.getElementById('admissionFinalAmount').textContent = '₹0';
+    document.getElementById('admissionCalculationBreakdown').textContent =
+      'Enter Custom Membership Price above (Required)';
+  }
 }
 
 
@@ -938,6 +935,15 @@ async function handleAdmissionSubmit(e) {
   e.preventDefault();
   const selectedPlan = document.querySelector('input[name="subPlan"]:checked')?.value || '1 Month';
   const hasCardio = document.getElementById('admissionCardioOption')?.checked || false;
+  const customPriceInput = document.getElementById('admissionCustomPrice');
+  const customPriceRaw = customPriceInput ? customPriceInput.value.trim() : '';
+  const customPrice = parseFloat(customPriceRaw);
+
+  if (!customPriceRaw || isNaN(customPrice) || customPrice <= 0) {
+    showToast('Please enter a valid Custom Membership Price (₹) greater than 0', 'error');
+    if (customPriceInput) customPriceInput.focus();
+    return;
+  }
 
   const payload = {
     fullName: document.getElementById('admissionFullName').value.trim(),
@@ -948,6 +954,7 @@ async function handleAdmissionSubmit(e) {
     trainingCategory: document.getElementById('admissionCategory').value,
     batch: document.getElementById('admissionBatch').value,
     cardioOption: hasCardio,
+    customPrice: customPrice,
     paymentMethod: document.getElementById('admissionPaymentMethod').value,
     paymentStatus: document.getElementById('admissionPaymentStatus').value,
     transactionRef: document.getElementById('admissionTxnRef').value.trim(),
@@ -972,6 +979,9 @@ async function handleAdmissionSubmit(e) {
 
     showToast(`Athlete ${data.fullName} enrolled as ${data.memberCode}!`, 'success');
     document.getElementById('admissionForm').reset();
+    if (document.getElementById('admissionCustomPrice')) {
+      document.getElementById('admissionCustomPrice').value = '';
+    }
     initDateInputs();
     recalculateAdmissionFee();
     navigateTo('members');
@@ -1030,7 +1040,8 @@ async function loadMembers() {
         <td class="p-3.5 text-slate-300 font-mono">${m.phoneNumber}</td>
         <td class="p-3.5 font-semibold text-white">
           ${m.subscriptionPlan}
-          ${m.hasCardio ? '<span class="ml-1 text-[10px] text-cyan-400 font-bold">+Cardio</span>' : ''}
+          <span class="block text-[11px] text-gym-orange font-mono font-bold">${formatInr(m.customPrice != null ? m.customPrice : m.totalFee)}</span>
+          ${m.hasCardio ? '<span class="text-[10px] text-cyan-400 font-bold">+Cardio</span>' : ''}
         </td>
         <td class="p-3.5">
           <span class="block text-slate-200">${m.trainingCategory}</span>
@@ -1082,14 +1093,18 @@ async function viewMemberDetail(id) {
         </div>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
         <div class="bg-slate-900 p-3 rounded-xl border border-gym-border">
           <span class="text-slate-400 block">Plan</span>
           <span class="font-bold text-white">${m.subscriptionPlan}</span>
         </div>
         <div class="bg-slate-900 p-3 rounded-xl border border-gym-border">
+          <span class="text-slate-400 block">Membership Fee</span>
+          <span class="font-bold text-gym-orange">${formatInr(m.customPrice != null ? m.customPrice : m.totalFee)}</span>
+        </div>
+        <div class="bg-slate-900 p-3 rounded-xl border border-gym-border">
           <span class="text-slate-400 block">Cardio Access</span>
-          <span class="font-bold ${m.hasCardio ? 'text-cyan-400' : 'text-slate-400'}">${m.hasCardio ? 'Yes (+₹500)' : 'No'}</span>
+          <span class="font-bold ${m.hasCardio ? 'text-cyan-400' : 'text-slate-400'}">${m.hasCardio ? 'Yes' : 'No'}</span>
         </div>
         <div class="bg-slate-900 p-3 rounded-xl border border-gym-border">
           <span class="text-slate-400 block">Batch</span>

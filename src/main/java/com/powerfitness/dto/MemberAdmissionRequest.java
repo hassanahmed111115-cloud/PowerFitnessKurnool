@@ -15,6 +15,9 @@ public class MemberAdmissionRequest {
     private String paymentStatus; // Paid, Pending, Failed
     private String transactionRef;
     private String notes;
+    private Double customPrice; // Custom Membership Price (₹) entered by Admin
+    private Double customMembershipPrice;
+    private Double amount;
 
     public MemberAdmissionRequest() {}
 
@@ -53,4 +56,17 @@ public class MemberAdmissionRequest {
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public Double getCustomPrice() {
+        if (customPrice != null) return customPrice;
+        if (customMembershipPrice != null) return customMembershipPrice;
+        return amount;
+    }
+    public void setCustomPrice(Double customPrice) { this.customPrice = customPrice; }
+
+    public Double getCustomMembershipPrice() { return customMembershipPrice; }
+    public void setCustomMembershipPrice(Double customMembershipPrice) { this.customMembershipPrice = customMembershipPrice; }
+
+    public Double getAmount() { return amount; }
+    public void setAmount(Double amount) { this.amount = amount; }
 }

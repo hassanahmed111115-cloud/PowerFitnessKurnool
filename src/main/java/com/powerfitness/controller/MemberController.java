@@ -142,16 +142,25 @@ public class MemberController {
             return ResponseEntity.badRequest().body(Map.of("error", "A member with this phone number already exists"));
         }
 
+        // Validation: Custom Membership Price is mandatory
+        Double customPrice = req.getCustomPrice();
+        if (customPrice == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Custom Membership Price (₹) is required"));
+        }
+        if (Double.isNaN(customPrice) || Double.isInfinite(customPrice) || customPrice <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Custom Membership Price must be a valid positive amount greater than 0"));
+        }
+
         LocalDate admissionDate = req.getAdmissionDate() != null ? req.getAdmissionDate() : LocalDate.now();
         String plan = req.getSubscriptionPlan() != null ? req.getSubscriptionPlan() : "1 Month";
         String category = req.getTrainingCategory() != null ? req.getTrainingCategory() : "Strength Training";
         String batch = req.getBatch() != null ? req.getBatch() : "Morning Batch";
         boolean cardio = req.isCardioOption();
 
-        // Calculate Pricing
-        double baseFee = pricingService.getBasePlanPrice(plan);
-        double cardioFee = cardio ? PricingService.CARDIO_FEE : 0.0;
-        double totalFee = baseFee + cardioFee;
+        // Calculate Pricing based on the mandatory Custom Membership Price
+        double totalFee = customPrice;
+        double cardioFee = cardio ? Math.min(PricingService.CARDIO_FEE, totalFee) : 0.0;
+        double baseFee = Math.max(0.0, totalFee - cardioFee);
 
         // Calculate Expiry
         int durationDays = pricingService.getPlanDurationDays(plan);
@@ -187,6 +196,7 @@ public class MemberController {
             member.setBatch(batch);
             member.setHasCardio(cardio);
             member.setTotalFee(totalFee);
+            member.setCustomPrice(totalFee);
             member.setStartDate(admissionDate);
             member.setExpiryDate(expiryDate);
             member.setStatus("ACTIVE");
@@ -220,7 +230,7 @@ public class MemberController {
             p.setSubscriptionPlan(plan);
             p.setPaymentStatus(req.getPaymentStatus() != null ? req.getPaymentStatus() : "Paid");
             p.setTransactionRef(req.getTransactionRef());
-            p.setNotes("New Admission: " + plan + (cardio ? " + Cardio" : ""));
+            p.setNotes("New Admission: " + plan + " (Custom Price: ₹" + totalFee + ")" + (cardio ? " + Cardio" : ""));
             paymentRepository.save(p);
 
             // Notifications
@@ -298,6 +308,13 @@ public class MemberController {
         if (req.getBatch() != null) m.setBatch(req.getBatch());
         m.setHasCardio(req.isCardioOption());
         if (req.getNotes() != null) m.setNotes(req.getNotes());
+        if (req.getCustomPrice() != null) {
+            if (req.getCustomPrice() <= 0 || Double.isNaN(req.getCustomPrice()) || Double.isInfinite(req.getCustomPrice())) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Custom Membership Price must be a valid positive amount greater than 0"));
+            }
+            m.setCustomPrice(req.getCustomPrice());
+            m.setTotalFee(req.getCustomPrice());
+        }
 
         Member updated = memberRepository.save(m);
         return ResponseEntity.ok(updated);

@@ -38,6 +38,8 @@ public class Member {
     private boolean hasCardio;
 
     private double totalFee;
+    @Column(nullable = true)
+    private Double customPrice; // Saved member-specific custom membership price
 
     private LocalDate startDate;
 
@@ -86,6 +88,9 @@ public class Member {
 
     public double getTotalFee() { return totalFee; }
     public void setTotalFee(double totalFee) { this.totalFee = totalFee; }
+
+    public Double getCustomPrice() { return customPrice != null ? customPrice : totalFee; }
+    public void setCustomPrice(Double customPrice) { this.customPrice = customPrice; }
 
     public LocalDate getStartDate() { return startDate; }
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }

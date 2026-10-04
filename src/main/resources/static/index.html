@@ -553,14 +553,27 @@
                   <span class="text-xs font-bold text-cyan-400">+ ₹500</span>
                 </div>
 
+                <!-- Custom Membership Price / Amount (Mandatory) -->
+                <div>
+                  <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5 flex items-center justify-between">
+                    <span>Custom Membership Price (₹) *</span>
+                    <span class="text-[11px] font-semibold text-gym-orange">Mandatory Manual Amount</span>
+                  </label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 font-bold">₹</span>
+                    <input type="number" id="admissionCustomPrice" step="any" min="1" required placeholder="Enter custom amount e.g. 800" oninput="recalculateAdmissionFee()" class="w-full bg-slate-900 border border-gym-border rounded-xl pl-8 pr-4 py-3 text-sm text-white focus:outline-none focus:border-gym-orange font-semibold placeholder:text-slate-500">
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-1">Manually enter the membership amount to charge this member. Different members on the same plan can have different amounts.</p>
+                </div>
+
                 <!-- Dynamic Calculation Summary Box -->
                 <div class="p-4 rounded-xl bg-gradient-to-r from-slate-950 to-slate-900 border border-gym-border flex items-center justify-between">
                   <div>
-                    <span class="text-xs text-slate-400 block font-medium">Automatic Total Amount</span>
-                    <span id="admissionCalculationBreakdown" class="text-[11px] text-slate-500">Plan: ₹800 + Cardio: ₹0</span>
+                    <span class="text-xs text-slate-400 block font-medium">Final Membership Fee</span>
+                    <span id="admissionCalculationBreakdown" class="text-[11px] text-slate-500">Enter custom price above (Required)</span>
                   </div>
                   <div class="text-right">
-                    <span id="admissionFinalAmount" class="font-display font-bold text-3xl text-gym-orange">₹800</span>
+                    <span id="admissionFinalAmount" class="font-display font-bold text-3xl text-gym-orange">₹0</span>
                   </div>
                 </div>
               </div>
