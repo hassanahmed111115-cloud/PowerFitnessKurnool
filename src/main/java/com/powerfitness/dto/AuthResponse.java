@@ -10,6 +10,7 @@ public class AuthResponse {
     private Role role;
     private String memberCode;
     private String photoUrl;
+    private String phoneNumber;
 
     public AuthResponse() {}
 
@@ -43,4 +44,7 @@ public class AuthResponse {
 
     public String getPhotoUrl() { return photoUrl; }
     public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
+
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 }

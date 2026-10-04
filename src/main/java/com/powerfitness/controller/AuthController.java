@@ -65,6 +65,7 @@ public class AuthController {
         details.put("username", user.getUsername());
         details.put("fullName", user.getFullName());
         details.put("role", user.getRole());
+        details.put("phoneNumber", user.getPhoneNumber());
 
         if (user.getRole() == Role.USER) {
             Optional<Member> memberOpt = memberRepository.findByUserId(user.getId());
@@ -205,50 +206,88 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
     }
 
-    // --- Admin: Forgot Password Request ---
-    @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(
-            @RequestBody Map<String, String> body,
-            @RequestHeader(value = "Origin", required = false) String origin,
-            @RequestHeader(value = "Referer", required = false) String referer) {
-        String usernameOrEmail = body != null ? (body.get("usernameOrEmail") != null ? body.get("usernameOrEmail") : body.get("username")) : null;
-        String baseUrl = origin;
-        if (baseUrl == null && referer != null) {
-            try {
-                java.net.URI uri = new java.net.URI(referer);
-                baseUrl = uri.getScheme() + "://" + uri.getAuthority();
-            } catch (Exception ignored) {}
+    // --- Admin: Request OTP to Register / Update Recovery Mobile Number ---
+    @PostMapping("/admin/phone/request-otp")
+    public ResponseEntity<?> requestAdminPhoneOtp(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody Map<String, String> body) {
+
+        User user = authService.getAuthenticatedUser(authHeader);
+        if (user == null || user.getRole() != Role.ADMIN) {
+            return ResponseEntity.status(403).body(Map.of("error", "Admin access required"));
         }
+
+        String phone = body != null ? (body.get("phoneNumber") != null ? body.get("phoneNumber") : body.get("mobileNumber")) : null;
         try {
-            Map<String, Object> res = passwordRecoveryService.requestPasswordReset(usernameOrEmail, baseUrl);
+            Map<String, Object> res = passwordRecoveryService.requestAdminPhoneRegistrationOtp(user, phone);
             return ResponseEntity.ok(res);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
-    // --- Admin: Validate Reset Token ---
-    @PostMapping("/validate-reset-token")
-    public ResponseEntity<?> validateResetToken(@RequestBody Map<String, String> body) {
-        String token = body != null ? body.get("token") : null;
-        boolean valid = passwordRecoveryService.validateToken(token);
-        Map<String, Object> res = new HashMap<>();
-        res.put("valid", valid);
-        if (!valid) {
-            res.put("error", "The reset token is invalid, expired, or has already been used.");
+    // --- Admin: Verify OTP and Save Recovery Mobile Number ---
+    @PostMapping("/admin/phone/verify-otp")
+    public ResponseEntity<?> verifyAdminPhoneOtp(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody Map<String, String> body) {
+
+        User user = authService.getAuthenticatedUser(authHeader);
+        if (user == null || user.getRole() != Role.ADMIN) {
+            return ResponseEntity.status(403).body(Map.of("error", "Admin access required"));
         }
-        return ResponseEntity.ok(res);
+
+        String challengeToken = body != null ? body.get("challengeToken") : null;
+        String otp = body != null ? body.get("otp") : null;
+
+        try {
+            Map<String, Object> res = passwordRecoveryService.verifyAdminPhoneRegistrationOtp(user, challengeToken, otp);
+            return ResponseEntity.ok(res);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
-    // --- Admin: Reset Password ---
+    // Direct update without OTP is rejected
+    @PutMapping("/admin/phone")
+    public ResponseEntity<?> updateAdminPhoneDirect() {
+        return ResponseEntity.badRequest().body(Map.of("error", "Direct mobile update without OTP is not allowed. Please use the OTP verification flow."));
+    }
+
+    // --- Admin: Request Mobile OTP for Password Recovery ---
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> requestAdminOtp(@RequestBody Map<String, String> body) {
+        String mobileNumber = body != null ? (body.get("mobileNumber") != null ? body.get("mobileNumber") : body.get("usernameOrEmail")) : null;
+        try {
+            Map<String, Object> res = passwordRecoveryService.requestAdminOtp(mobileNumber);
+            return ResponseEntity.ok(res);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // --- Admin: Verify Mobile OTP ---
+    @PostMapping("/forgot-password/verify-otp")
+    public ResponseEntity<?> verifyAdminOtp(@RequestBody Map<String, String> body) {
+        String challengeToken = body != null ? body.get("challengeToken") : null;
+        String otp = body != null ? body.get("otp") : null;
+        try {
+            Map<String, Object> res = passwordRecoveryService.verifyOtp(challengeToken, otp);
+            return ResponseEntity.ok(res);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // --- Admin: Reset Password with Verified OTP Token ---
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
-        String token = body != null ? body.get("token") : null;
+    public ResponseEntity<?> resetAdminPassword(@RequestBody Map<String, String> body) {
+        String resetToken = body != null ? (body.get("resetToken") != null ? body.get("resetToken") : body.get("token")) : null;
         String newPassword = body != null ? body.get("newPassword") : null;
         String confirmPassword = body != null ? body.get("confirmPassword") : null;
 
         try {
-            passwordRecoveryService.resetPassword(token, newPassword, confirmPassword);
+            passwordRecoveryService.resetAdminPassword(resetToken, newPassword, confirmPassword);
             return ResponseEntity.ok(Map.of("message", "Password has been successfully reset! You can now log in with your new password."));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

@@ -384,4 +384,61 @@ public class MemberController {
 
         return ResponseEntity.ok(member);
     }
+
+    // --- Admin: Change Normal Member/User Password ---
+    @PutMapping("/admin/members/{id}/password")
+    public ResponseEntity<?> changeMemberPassword(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+
+        User admin = authService.getAuthenticatedUser(authHeader);
+        if (admin == null || admin.getRole() != Role.ADMIN || !admin.isEnabled()) {
+            return ResponseEntity.status(403).body(Map.of("error", "Admin access required"));
+        }
+
+        Optional<Member> memberOpt = memberRepository.findById(id);
+        if (memberOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "Member not found"));
+        }
+
+        Member member = memberOpt.get();
+        User memberUser = member.getUser();
+        if (memberUser == null) {
+            Optional<User> uOpt = userRepository.findByUsername(member.getPhoneNumber());
+            if (uOpt.isPresent()) {
+                memberUser = uOpt.get();
+                member.setUser(memberUser);
+                memberRepository.save(member);
+            } else {
+                return ResponseEntity.badRequest().body(Map.of("error", "Member does not have an associated user account"));
+            }
+        }
+
+        String newPassword = body != null ? body.get("newPassword") : null;
+        String confirmPassword = body != null ? body.get("confirmPassword") : null;
+
+        if (newPassword == null || newPassword.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "New password is required"));
+        }
+
+        if (newPassword.length() < 6) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Password must be at least 6 characters long"));
+        }
+
+        if (confirmPassword == null || !newPassword.equals(confirmPassword)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Passwords do not match"));
+        }
+
+        memberUser.setPassword(authService.hashPassword(newPassword));
+        memberUser.setUpdatedAt(java.time.LocalDateTime.now());
+        userRepository.save(memberUser);
+
+        // Invalidate active sessions for this member
+        authService.invalidateSessionsForUser(memberUser.getId());
+
+        return ResponseEntity.ok(Map.of(
+            "message", "Password changed successfully for member " + member.getFullName()
+        ));
+    }
 }

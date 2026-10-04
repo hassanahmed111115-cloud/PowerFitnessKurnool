@@ -22,6 +22,9 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @Column(length = 20)
+    private String phoneNumber;
+
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(columnDefinition = "boolean default true")
@@ -62,6 +65,9 @@ public class User {
     public Boolean getEnabled() { return enabled == null ? true : enabled; }
     public void setEnabled(Boolean enabled) { this.enabled = enabled; }
     public boolean isEnabled() { return enabled == null || enabled; }
+
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 
     public LocalDateTime getUpdatedAt() { return updatedAt == null ? createdAt : updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }

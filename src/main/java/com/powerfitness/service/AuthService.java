@@ -67,12 +67,20 @@ public class AuthService {
             }
         }
 
-        return new AuthResponse(token, user.getId(), user.getUsername(), user.getFullName(), user.getRole(), memberCode, photoUrl);
+        AuthResponse response = new AuthResponse(token, user.getId(), user.getUsername(), user.getFullName(), user.getRole(), memberCode, photoUrl);
+        response.setPhoneNumber(user.getPhoneNumber());
+        return response;
     }
 
     public void logout(String token) {
         if (token != null) {
             tokenToUserId.remove(token.replace("Bearer ", "").trim());
+        }
+    }
+
+    public void invalidateSessionsForUser(Long userId) {
+        if (userId != null) {
+            tokenToUserId.entrySet().removeIf(entry -> userId.equals(entry.getValue()));
         }
     }
 

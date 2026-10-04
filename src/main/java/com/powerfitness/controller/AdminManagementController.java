@@ -101,6 +101,10 @@ public class AdminManagementController {
 
         User newAdmin = new User(username, authService.hashPassword(password), fullName, Role.ADMIN);
         newAdmin.setEnabled(true);
+        String phoneNumber = body != null ? (body.get("phoneNumber") != null ? body.get("phoneNumber") : body.get("mobileNumber")) : null;
+        if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+            newAdmin.setPhoneNumber(phoneNumber.trim().replaceAll("[^0-9]", ""));
+        }
         newAdmin.setCreatedAt(LocalDateTime.now());
         newAdmin.setUpdatedAt(LocalDateTime.now());
 

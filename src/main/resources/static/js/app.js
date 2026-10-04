@@ -1049,6 +1049,7 @@ async function loadMembers() {
         </td>
         <td class="p-3.5 text-right space-x-1">
           <button onclick="viewMemberDetail(${m.id})" title="View Profile" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg">👁️</button>
+          <button onclick="openChangeMemberPasswordModal(${m.id}, '${escapeHtml(m.fullName)}', '${m.memberCode}')" title="Change User Password" class="p-1.5 bg-blue-950/40 hover:bg-blue-600 text-blue-400 hover:text-white rounded-lg transition">🔑</button>
           <button onclick="openRenewModalForMember(${m.id}, '${escapeHtml(m.fullName)}', '${m.memberCode}', '${m.expiryDate}', '${m.subscriptionPlan}')" title="Renew" class="p-1.5 bg-gym-orange/20 hover:bg-gym-orange text-gym-orange hover:text-white rounded-lg transition">🔄</button>
           <button onclick="deleteMember(${m.id}, '${escapeHtml(m.fullName)}')" title="Delete" class="p-1.5 bg-red-950/40 hover:bg-gym-crimson text-gym-crimson hover:text-white rounded-lg transition">🗑️</button>
         </td>
@@ -1132,6 +1133,12 @@ async function viewMemberDetail(id) {
             </div>
           `).join('')}
         </div>
+      </div>
+
+      <div class="pt-3 border-t border-gym-border flex justify-end">
+        <button onclick="closeMemberProfileModal(); openChangeMemberPasswordModal(${m.id}, '${escapeHtml(m.fullName)}', '${m.memberCode}')" class="px-4 py-2 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 rounded-xl text-xs font-bold uppercase transition flex items-center gap-1.5">
+          <span>🔑 Change User Password</span>
+        </button>
       </div>
     `;
 
@@ -2368,12 +2375,258 @@ function openAdminAccountModal() {
     msgEl.className = 'hidden p-3.5 rounded-xl text-xs font-semibold';
     msgEl.textContent = '';
   }
+  updateAdminPhoneDisplay();
+  cancelAdminPhoneForm();
   modal.classList.remove('hidden');
 }
 
 function closeAdminAccountModal() {
   const modal = document.getElementById('adminAccountModal');
   if (modal) modal.classList.add('hidden');
+  cancelAdminPhoneForm();
+}
+
+// --- Admin Recovery Phone Management ---
+let adminPhoneChallengeToken = null;
+let adminPhonePendingMobile = '';
+let adminPhoneCooldownInterval = null;
+
+function updateAdminPhoneDisplay() {
+  const phone = (STATE.user && STATE.user.phoneNumber) ? STATE.user.phoneNumber.trim() : '';
+  const displayStatus = document.getElementById('displayCurrentAdminPhone');
+  const displayVal = document.getElementById('adminPhoneValueDisplay');
+  const toggleBtn = document.getElementById('btnToggleAdminPhoneForm');
+  const inputLbl = document.getElementById('lblAdminPhoneInput');
+
+  if (phone) {
+    if (displayStatus) {
+      displayStatus.textContent = '+91 ' + phone;
+      displayStatus.className = 'text-gym-emerald font-bold';
+    }
+    if (displayVal) {
+      displayVal.textContent = '+91 ' + phone;
+      displayVal.className = 'text-xs font-mono font-bold text-gym-emerald mt-0.5';
+    }
+    if (toggleBtn) {
+      toggleBtn.textContent = 'Change/Update Mobile Number';
+      toggleBtn.className = 'px-3.5 py-2 bg-slate-800 hover:bg-slate-700 border border-gym-border text-cyan-400 hover:text-cyan-300 text-xs font-bold uppercase tracking-wider rounded-lg transition shadow-sm self-start sm:self-auto cursor-pointer';
+    }
+    if (inputLbl) {
+      inputLbl.textContent = 'Enter New Mobile Number (10 Digits)';
+    }
+  } else {
+    if (displayStatus) {
+      displayStatus.textContent = 'Mobile Number Not Registered';
+      displayStatus.className = 'text-gym-crimson font-bold';
+    }
+    if (displayVal) {
+      displayVal.textContent = 'Mobile Number Not Registered';
+      displayVal.className = 'text-xs font-mono font-bold text-slate-400 mt-0.5';
+    }
+    if (toggleBtn) {
+      toggleBtn.textContent = 'Register Mobile Number';
+      toggleBtn.className = 'px-3.5 py-2 bg-gym-orange hover:bg-orange-600 text-slate-950 text-xs font-bold uppercase tracking-wider rounded-lg transition shadow-sm self-start sm:self-auto cursor-pointer';
+    }
+    if (inputLbl) {
+      inputLbl.textContent = 'Enter Mobile Number (10 Digits)';
+    }
+  }
+}
+
+function toggleAdminPhoneForm() {
+  const container = document.getElementById('adminPhoneFormContainer');
+  if (!container) return;
+  if (container.classList.contains('hidden')) {
+    container.classList.remove('hidden');
+    showAdminPhoneStep('input');
+    const input = document.getElementById('adminNewPhoneNumber');
+    if (input) {
+      input.value = '';
+      input.focus();
+    }
+  } else {
+    cancelAdminPhoneForm();
+  }
+}
+
+function cancelAdminPhoneForm() {
+  const container = document.getElementById('adminPhoneFormContainer');
+  if (container) container.classList.add('hidden');
+  showAdminPhoneStep('input');
+  const phoneInput = document.getElementById('adminNewPhoneNumber');
+  if (phoneInput) phoneInput.value = '';
+  const otpInput = document.getElementById('adminPhoneOtpInput');
+  if (otpInput) otpInput.value = '';
+  adminPhoneChallengeToken = null;
+  adminPhonePendingMobile = '';
+  if (adminPhoneCooldownInterval) {
+    clearInterval(adminPhoneCooldownInterval);
+    adminPhoneCooldownInterval = null;
+  }
+}
+
+function showAdminPhoneStep(step) {
+  const stepInput = document.getElementById('adminPhoneStepInput');
+  const stepOtp = document.getElementById('adminPhoneStepOtp');
+  if (step === 'input') {
+    if (stepInput) stepInput.classList.remove('hidden');
+    if (stepOtp) stepOtp.classList.add('hidden');
+  } else if (step === 'otp') {
+    if (stepInput) stepInput.classList.add('hidden');
+    if (stepOtp) stepOtp.classList.remove('hidden');
+  }
+}
+
+async function sendAdminPhoneOtp() {
+  const phoneInput = document.getElementById('adminNewPhoneNumber');
+  const msgEl = document.getElementById('adminAccountMsg');
+  const sendBtn = document.getElementById('btnSendAdminPhoneOtp');
+  if (!phoneInput) return;
+
+  let phone = phoneInput.value.replace(/\D/g, '');
+  if (phone.length === 12 && phone.startsWith('91')) phone = phone.substring(2);
+  if (phone.length === 11 && phone.startsWith('0')) phone = phone.substring(1);
+
+  if (phone.length !== 10) {
+    showInlineMsg(msgEl, 'Please enter a valid 10-digit mobile number', 'error');
+    phoneInput.focus();
+    return;
+  }
+
+  if (sendBtn) {
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<span>Sending OTP...</span>';
+  }
+
+  try {
+    const res = await fetch('/api/auth/admin/phone/request-otp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${STATE.token}`
+      },
+      body: JSON.stringify({ phoneNumber: phone })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      adminPhoneChallengeToken = data.challengeToken;
+      adminPhonePendingMobile = phone;
+      showAdminPhoneStep('otp');
+      const targetDisplay = document.getElementById('displayTargetPhone');
+      if (targetDisplay) targetDisplay.textContent = '+91 ' + phone;
+      const otpInput = document.getElementById('adminPhoneOtpInput');
+      if (otpInput) {
+        otpInput.value = '';
+        otpInput.focus();
+      }
+      startAdminPhoneCooldown(data.cooldownSeconds || 60);
+      showInlineMsg(msgEl, '✓ ' + (data.message || 'Verification OTP sent to your mobile number'), 'success');
+    } else {
+      showInlineMsg(msgEl, data.error || 'Failed to send OTP', 'error');
+    }
+  } catch (err) {
+    showInlineMsg(msgEl, 'Network error. Please try again.', 'error');
+  } finally {
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = '<span>Send Verification OTP</span>';
+    }
+  }
+}
+
+function resendAdminPhoneOtp() {
+  if (!adminPhonePendingMobile) return;
+  const phoneInput = document.getElementById('adminNewPhoneNumber');
+  if (phoneInput) phoneInput.value = adminPhonePendingMobile;
+  sendAdminPhoneOtp();
+}
+
+function startAdminPhoneCooldown(seconds) {
+  const btn = document.getElementById('btnResendAdminPhoneOtp');
+  if (!btn) return;
+  if (adminPhoneCooldownInterval) clearInterval(adminPhoneCooldownInterval);
+  let remaining = seconds;
+  btn.disabled = true;
+  btn.textContent = `Resend OTP (${remaining}s)`;
+
+  adminPhoneCooldownInterval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(adminPhoneCooldownInterval);
+      adminPhoneCooldownInterval = null;
+      btn.disabled = false;
+      btn.textContent = 'Resend OTP';
+    } else {
+      btn.textContent = `Resend OTP (${remaining}s)`;
+    }
+  }, 1000);
+}
+
+async function verifyAdminPhoneOtp() {
+  const otpInput = document.getElementById('adminPhoneOtpInput');
+  const msgEl = document.getElementById('adminAccountMsg');
+  const verifyBtn = document.getElementById('btnVerifyAdminPhoneOtp');
+  if (!otpInput) return;
+
+  const otp = otpInput.value.trim();
+  if (!otp || !/^\d{6}$/.test(otp)) {
+    showInlineMsg(msgEl, 'Please enter the 6-digit OTP sent to your mobile', 'error');
+    otpInput.focus();
+    return;
+  }
+
+  if (!adminPhoneChallengeToken) {
+    showInlineMsg(msgEl, 'Invalid session. Please request a new OTP.', 'error');
+    return;
+  }
+
+  if (verifyBtn) {
+    verifyBtn.disabled = true;
+    verifyBtn.innerHTML = '<span>Verifying...</span>';
+  }
+
+  try {
+    const res = await fetch('/api/auth/admin/phone/verify-otp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${STATE.token}`
+      },
+      body: JSON.stringify({
+        challengeToken: adminPhoneChallengeToken,
+        otp: otp
+      })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      if (STATE.user) {
+        STATE.user.phoneNumber = data.phoneNumber;
+        try {
+          localStorage.setItem('pfk_user', JSON.stringify(STATE.user));
+          localStorage.setItem('pf_user', JSON.stringify(STATE.user));
+        } catch (e) {}
+      }
+      updateAdminPhoneDisplay();
+      cancelAdminPhoneForm();
+      showInlineMsg(msgEl, '✓ ' + (data.message || 'Recovery mobile number verified and registered successfully!'), 'success');
+      showToast('✓ Recovery mobile number registered successfully!', 'success');
+    } else {
+      showInlineMsg(msgEl, data.error || 'Failed to verify OTP', 'error');
+      if (otpInput) {
+        otpInput.value = '';
+        otpInput.focus();
+      }
+    }
+  } catch (err) {
+    showInlineMsg(msgEl, 'Network error. Please try again.', 'error');
+  } finally {
+    if (verifyBtn) {
+      verifyBtn.disabled = false;
+      verifyBtn.innerHTML = '<span>Verify & Save Mobile Number</span>';
+    }
+  }
 }
 
 async function updateAdminUsername() {
@@ -4366,14 +4619,60 @@ function openForgotPasswordModal() {
   if (uInput) setTimeout(() => uInput.focus(), 100);
 }
 
+let forgotResendTimer = null;
+let forgotResendSecondsLeft = 0;
+
+function openForgotPasswordModal() {
+  const modal = document.getElementById('forgotPasswordModal');
+  if (!modal) return;
+  const mob = document.getElementById('forgotMobileNumber');
+  const otp = document.getElementById('forgotOtpInput');
+  const p1 = document.getElementById('forgotNewPassword');
+  const p2 = document.getElementById('forgotConfirmPassword');
+  const msg = document.getElementById('forgotPasswordMsg');
+
+  if (mob) mob.value = '';
+  if (otp) otp.value = '';
+  if (p1) p1.value = '';
+  if (p2) p2.value = '';
+  if (msg) {
+    msg.className = 'hidden p-3.5 rounded-xl text-xs font-semibold';
+    msg.textContent = '';
+  }
+
+  STATE.otpChallengeToken = null;
+  STATE.otpResetToken = null;
+  STATE.otpMobile = null;
+
+  switchForgotModalStep(1);
+  modal.classList.remove('hidden');
+  if (mob) setTimeout(() => mob.focus(), 100);
+}
+
 function closeForgotPasswordModal() {
   const modal = document.getElementById('forgotPasswordModal');
   if (modal) modal.classList.add('hidden');
+  if (forgotResendTimer) {
+    clearInterval(forgotResendTimer);
+    forgotResendTimer = null;
+  }
+  STATE.otpChallengeToken = null;
+  STATE.otpResetToken = null;
+  STATE.otpMobile = null;
+  const mob = document.getElementById('forgotMobileNumber');
+  const otp = document.getElementById('forgotOtpInput');
+  const p1 = document.getElementById('forgotNewPassword');
+  const p2 = document.getElementById('forgotConfirmPassword');
+  if (mob) mob.value = '';
+  if (otp) otp.value = '';
+  if (p1) p1.value = '';
+  if (p2) p2.value = '';
 }
 
 function switchForgotModalStep(step) {
   const s1 = document.getElementById('forgotStep1');
   const s2 = document.getElementById('forgotStep2');
+  const s3 = document.getElementById('forgotStep3');
   const title = document.getElementById('forgotModalTitle');
   const subtitle = document.getElementById('forgotModalSubtitle');
   const msg = document.getElementById('forgotPasswordMsg');
@@ -4385,69 +4684,95 @@ function switchForgotModalStep(step) {
   if (step === 1) {
     if (s1) s1.classList.remove('hidden');
     if (s2) s2.classList.add('hidden');
-    if (title) title.textContent = 'Account Recovery';
-    if (subtitle) subtitle.textContent = 'Reset your Power Fitness Admin password';
-  } else {
+    if (s3) s3.classList.add('hidden');
+    if (title) title.textContent = 'Admin Recovery';
+    if (subtitle) subtitle.textContent = 'Enter registered mobile number for OTP';
+    const mob = document.getElementById('forgotMobileNumber');
+    if (mob) setTimeout(() => mob.focus(), 100);
+  } else if (step === 2) {
     if (s1) s1.classList.add('hidden');
     if (s2) s2.classList.remove('hidden');
+    if (s3) s3.classList.add('hidden');
+    if (title) title.textContent = 'Verify Mobile OTP';
+    if (subtitle) subtitle.textContent = 'Enter 6-digit verification code sent via SMS';
+    const otp = document.getElementById('forgotOtpInput');
+    if (otp) setTimeout(() => otp.focus(), 100);
+  } else if (step === 3) {
+    if (s1) s1.classList.add('hidden');
+    if (s2) s2.classList.add('hidden');
+    if (s3) s3.classList.remove('hidden');
     if (title) title.textContent = 'Set New Password';
-    if (subtitle) subtitle.textContent = 'Enter recovery token and your new password';
+    if (subtitle) subtitle.textContent = 'Enter your new administrator password';
+    const p1 = document.getElementById('forgotNewPassword');
+    if (p1) setTimeout(() => p1.focus(), 100);
   }
+}
+
+function startForgotResendCooldown(seconds = 60) {
+  if (forgotResendTimer) clearInterval(forgotResendTimer);
+  forgotResendSecondsLeft = seconds;
+  const btn = document.getElementById('btnResendForgotOtp');
+  const cd = document.getElementById('resendTimerCountdown');
+  if (btn) btn.disabled = true;
+  if (cd) cd.textContent = `(${forgotResendSecondsLeft}s)`;
+
+  forgotResendTimer = setInterval(() => {
+    forgotResendSecondsLeft--;
+    if (forgotResendSecondsLeft <= 0) {
+      clearInterval(forgotResendTimer);
+      forgotResendTimer = null;
+      if (btn) btn.disabled = false;
+      if (cd) cd.textContent = '';
+    } else {
+      if (cd) cd.textContent = `(${forgotResendSecondsLeft}s)`;
+    }
+  }, 1000);
 }
 
 async function submitForgotPasswordRequest(event) {
   if (event) event.preventDefault();
-  const input = document.getElementById('forgotUsernameOrEmail');
+  const input = document.getElementById('forgotMobileNumber');
   const msg = document.getElementById('forgotPasswordMsg');
   const btn = document.getElementById('btnSubmitForgotRequest');
   if (!input || !input.value.trim()) return;
 
+  const mobile = input.value.trim();
   const originalBtn = btn ? btn.innerHTML : '';
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Processing...';
+    btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Sending OTP...';
   }
 
   try {
     const res = await fetch('/api/auth/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usernameOrEmail: input.value.trim() })
+      body: JSON.stringify({ mobileNumber: mobile })
     });
 
     const data = await res.json();
     if (!res.ok) {
-      throw new Error(data.error || 'Failed to request password reset');
+      throw new Error(data.error || 'Failed to request password reset OTP');
     }
+
+    STATE.otpChallengeToken = data.challengeToken;
+    STATE.otpMobile = mobile;
+
+    startForgotResendCooldown(data.cooldownSeconds || 60);
 
     if (msg) {
       msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 block';
-      let infoText = data.message || 'If an administrator account with that username/email exists, password reset instructions have been generated.';
-      if (data.devResetToken) {
-        infoText += ` (Direct Token: ${data.devResetToken})`;
-        const tInput = document.getElementById('forgotResetToken');
-        if (tInput) tInput.value = data.devResetToken;
-      }
-      msg.textContent = infoText;
+      msg.textContent = data.message || 'If the mobile number is registered for an admin account, an OTP has been sent.';
     }
 
     setTimeout(() => {
       switchForgotModalStep(2);
-      if (data.devResetToken) {
-        const tInput = document.getElementById('forgotResetToken');
-        if (tInput) tInput.value = data.devResetToken;
-        const p1 = document.getElementById('forgotNewPassword');
-        if (p1) p1.focus();
-      } else {
-        const tInput = document.getElementById('forgotResetToken');
-        if (tInput) tInput.focus();
-      }
-    }, 2200);
+    }, 1200);
 
   } catch (err) {
     if (msg) {
       msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
-      msg.textContent = err.message || 'An error occurred while requesting password reset.';
+      msg.textContent = err.message || 'An error occurred while requesting OTP.';
     }
   } finally {
     if (btn) {
@@ -4457,25 +4782,131 @@ async function submitForgotPasswordRequest(event) {
   }
 }
 
+async function submitVerifyOtp(event) {
+  if (event) event.preventDefault();
+  const otpInput = document.getElementById('forgotOtpInput');
+  const msg = document.getElementById('forgotPasswordMsg');
+  const btn = document.getElementById('btnSubmitVerifyOtp');
+
+  const otp = otpInput ? otpInput.value.trim() : '';
+  if (!otp || otp.length !== 6) {
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
+      msg.textContent = 'Please enter a valid 6-digit OTP.';
+    }
+    return;
+  }
+
+  if (!STATE.otpChallengeToken) {
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
+      msg.textContent = 'Invalid session. Please request a new OTP.';
+    }
+    return;
+  }
+
+  const originalBtn = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Verifying...';
+  }
+
+  try {
+    const res = await fetch('/api/auth/forgot-password/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        challengeToken: STATE.otpChallengeToken,
+        otp: otp
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to verify OTP');
+    }
+
+    STATE.otpResetToken = data.resetToken;
+    if (otpInput) otpInput.value = '';
+
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 block';
+      msg.textContent = data.message || 'OTP verified successfully.';
+    }
+
+    setTimeout(() => {
+      switchForgotModalStep(3);
+    }, 600);
+
+  } catch (err) {
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
+      msg.textContent = err.message || 'Verification failed. Please check the OTP.';
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtn;
+    }
+  }
+}
+
+async function resendAdminOtp() {
+  if (forgotResendSecondsLeft > 0) return;
+  if (!STATE.otpMobile) {
+    switchForgotModalStep(1);
+    return;
+  }
+
+  const btn = document.getElementById('btnResendForgotOtp');
+  const msg = document.getElementById('forgotPasswordMsg');
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mobileNumber: STATE.otpMobile })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to resend OTP');
+    }
+
+    STATE.otpChallengeToken = data.challengeToken;
+    startForgotResendCooldown(data.cooldownSeconds || 60);
+
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 block';
+      msg.textContent = data.message || 'A new OTP has been sent if the mobile number is registered.';
+    }
+  } catch (err) {
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
+      msg.textContent = err.message || 'Failed to resend OTP.';
+    }
+  }
+}
+
 async function submitResetPasswordWithToken(event) {
   if (event) event.preventDefault();
-  const tokenInput = document.getElementById('forgotResetToken');
   const p1Input = document.getElementById('forgotNewPassword');
   const p2Input = document.getElementById('forgotConfirmPassword');
   const msg = document.getElementById('forgotPasswordMsg');
   const btn = document.getElementById('btnSubmitResetWithToken');
 
-  const token = tokenInput ? tokenInput.value.trim() : '';
   const newPassword = p1Input ? p1Input.value : '';
   const confirmPassword = p2Input ? p2Input.value : '';
 
-  if (!token) {
+  if (!STATE.otpResetToken) {
     if (msg) {
       msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
-      msg.textContent = 'Please enter your recovery token.';
+      msg.textContent = 'Session expired. Please request and verify a new OTP.';
     }
     return;
   }
+
   if (!newPassword || newPassword.length < 8) {
     if (msg) {
       msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
@@ -4483,6 +4914,7 @@ async function submitResetPasswordWithToken(event) {
     }
     return;
   }
+
   if (newPassword !== confirmPassword) {
     if (msg) {
       msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
@@ -4494,14 +4926,18 @@ async function submitResetPasswordWithToken(event) {
   const originalBtn = btn ? btn.innerHTML : '';
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Resetting...';
+    btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Resetting Password...';
   }
 
   try {
     const res = await fetch('/api/auth/reset-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, newPassword, confirmPassword })
+      body: JSON.stringify({
+        resetToken: STATE.otpResetToken,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword
+      })
     });
 
     const data = await res.json();
@@ -4509,7 +4945,7 @@ async function submitResetPasswordWithToken(event) {
       throw new Error(data.error || 'Failed to reset password');
     }
 
-    showToast('Admin password reset successfully! You can now log in.', 'success');
+    showToast('Admin password reset successfully! You can now log in with your new password.', 'success');
     closeForgotPasswordModal();
 
     const loginPwd = document.getElementById('loginPassword');
@@ -4522,6 +4958,103 @@ async function submitResetPasswordWithToken(event) {
     if (msg) {
       msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
       msg.textContent = err.message || 'An error occurred while resetting password.';
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtn;
+    }
+  }
+}
+
+// ================= ADMIN: CHANGE NORMAL MEMBER/USER PASSWORD =================
+function openChangeMemberPasswordModal(memberId, memberName, memberCode) {
+  const modal = document.getElementById('changeMemberPasswordModal');
+  const targetId = document.getElementById('changeMemberPasswordTargetId');
+  const subtitle = document.getElementById('changeMemberPasswordSubtitle');
+  const p1 = document.getElementById('memberNewPasswordInput');
+  const p2 = document.getElementById('memberConfirmPasswordInput');
+  const msg = document.getElementById('changeMemberPasswordMsg');
+
+  if (targetId) targetId.value = memberId;
+  if (subtitle) subtitle.textContent = `Set new password for ${memberName} (${memberCode})`;
+  if (p1) p1.value = '';
+  if (p2) p2.value = '';
+  if (msg) {
+    msg.className = 'hidden p-3.5 rounded-xl text-xs font-semibold';
+    msg.textContent = '';
+  }
+
+  if (modal) modal.classList.remove('hidden');
+  if (p1) setTimeout(() => p1.focus(), 100);
+}
+
+function closeChangeMemberPasswordModal() {
+  const modal = document.getElementById('changeMemberPasswordModal');
+  if (modal) modal.classList.add('hidden');
+  const p1 = document.getElementById('memberNewPasswordInput');
+  const p2 = document.getElementById('memberConfirmPasswordInput');
+  if (p1) p1.value = '';
+  if (p2) p2.value = '';
+}
+
+async function submitChangeMemberPassword(event) {
+  if (event) event.preventDefault();
+  const targetId = document.getElementById('changeMemberPasswordTargetId')?.value;
+  const newPassword = document.getElementById('memberNewPasswordInput')?.value;
+  const confirmPassword = document.getElementById('memberConfirmPasswordInput')?.value;
+  const msg = document.getElementById('changeMemberPasswordMsg');
+  const btn = document.getElementById('btnSubmitChangeMemberPassword');
+
+  if (!targetId) return;
+
+  if (!newPassword || newPassword.length < 6) {
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
+      msg.textContent = 'New password must be at least 6 characters long.';
+    }
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
+      msg.textContent = 'Passwords do not match.';
+    }
+    return;
+  }
+
+  const originalBtn = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Updating...';
+  }
+
+  try {
+    const res = await fetch(`/api/admin/members/${targetId}/password`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${STATE.token}`
+      },
+      body: JSON.stringify({
+        newPassword: newPassword,
+        confirmPassword: confirmPassword
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to update member password');
+    }
+
+    showToast(data.message || 'Member password updated successfully', 'success');
+    closeChangeMemberPasswordModal();
+
+  } catch (err) {
+    if (msg) {
+      msg.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 block';
+      msg.textContent = err.message || 'An error occurred while updating member password.';
     }
   } finally {
     if (btn) {

@@ -8,6 +8,7 @@ public class AdminUserDto {
     private Long id;
     private String username;
     private String fullName;
+    private String phoneNumber;
     private Role role;
     private boolean enabled;
     private LocalDateTime createdAt;
@@ -15,10 +16,11 @@ public class AdminUserDto {
 
     public AdminUserDto() {}
 
-    public AdminUserDto(Long id, String username, String fullName, Role role, boolean enabled, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public AdminUserDto(Long id, String username, String fullName, String phoneNumber, Role role, boolean enabled, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.username = username;
         this.fullName = fullName;
+        this.phoneNumber = phoneNumber;
         this.role = role;
         this.enabled = enabled;
         this.createdAt = createdAt;
@@ -31,6 +33,7 @@ public class AdminUserDto {
             user.getId(),
             user.getUsername(),
             user.getFullName(),
+            user.getPhoneNumber(),
             user.getRole(),
             user.isEnabled(),
             user.getCreatedAt(),
@@ -46,6 +49,9 @@ public class AdminUserDto {
 
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
+
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
