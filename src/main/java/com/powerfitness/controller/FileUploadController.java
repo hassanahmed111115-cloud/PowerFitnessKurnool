@@ -86,4 +86,46 @@ public class FileUploadController {
             return ResponseEntity.internalServerError().body(Map.of("error", "Supplement image upload failed: " + e.getMessage()));
         }
     }
+
+    @DeleteMapping("/member-photo/{filename}")
+    public ResponseEntity<?> deleteMemberPhoto(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String filename) {
+
+        User user = authService.getAuthenticatedUser(authHeader);
+        if (user == null || user.getRole() != Role.ADMIN) {
+            return ResponseEntity.status(403).body(Map.of("error", "Admin access required"));
+        }
+
+        fileStorageService.deleteFile(filename);
+        return ResponseEntity.ok(Map.of("message", "Member photo deleted successfully"));
+    }
+
+    @DeleteMapping("/supplement-photo/{filename}")
+    public ResponseEntity<?> deleteSupplementPhoto(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String filename) {
+
+        User user = authService.getAuthenticatedUser(authHeader);
+        if (user == null || user.getRole() != Role.ADMIN) {
+            return ResponseEntity.status(403).body(Map.of("error", "Admin access required"));
+        }
+
+        fileStorageService.deleteFile(filename);
+        return ResponseEntity.ok(Map.of("message", "Supplement photo deleted successfully"));
+    }
+
+    @DeleteMapping("/photo")
+    public ResponseEntity<?> deleteAnyPhotoByUrl(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam("url") String url) {
+
+        User user = authService.getAuthenticatedUser(authHeader);
+        if (user == null || user.getRole() != Role.ADMIN) {
+            return ResponseEntity.status(403).body(Map.of("error", "Admin access required"));
+        }
+
+        fileStorageService.deleteFile(url);
+        return ResponseEntity.ok(Map.of("message", "Photo deleted successfully from persistent storage"));
+    }
 }

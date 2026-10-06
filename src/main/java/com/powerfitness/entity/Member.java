@@ -41,6 +41,9 @@ public class Member {
     @Column(nullable = true)
     private Double customPrice; // Saved member-specific custom membership price
 
+    @Column(nullable = true)
+    private Integer durationMonths; // Custom membership duration in months
+
     private LocalDate startDate;
 
     private LocalDate expiryDate;
@@ -91,6 +94,24 @@ public class Member {
 
     public Double getCustomPrice() { return customPrice != null ? customPrice : totalFee; }
     public void setCustomPrice(Double customPrice) { this.customPrice = customPrice; }
+
+    public Integer getDurationMonths() {
+        if (durationMonths != null && durationMonths > 0) return durationMonths;
+        if (startDate != null && expiryDate != null) {
+            long months = java.time.temporal.ChronoUnit.MONTHS.between(startDate, expiryDate);
+            if (months > 0) return (int) months;
+        }
+        if (subscriptionPlan != null) {
+            String p = subscriptionPlan.toLowerCase();
+            if (p.contains("1 year") || p.contains("12 month")) return 12;
+            if (p.contains("6 month")) return 6;
+            if (p.contains("3 month")) return 3;
+            if (p.contains("2 month")) return 2;
+            if (p.contains("1 month")) return 1;
+        }
+        return 1;
+    }
+    public void setDurationMonths(Integer durationMonths) { this.durationMonths = durationMonths; }
 
     public LocalDate getStartDate() { return startDate; }
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }

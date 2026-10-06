@@ -7,6 +7,7 @@ public class MemberAdmissionRequest {
     private String phoneNumber;
     private String photoUrl;
     private LocalDate admissionDate;
+    private Integer durationMonths; // Custom Membership Duration in Months
     private String subscriptionPlan; // 1 Month, 3 Months, 6 Months, 1 Year
     private String trainingCategory; // Cardio, Strength Training
     private String batch; // Morning Batch, Evening Batch
@@ -69,4 +70,24 @@ public class MemberAdmissionRequest {
 
     public Double getAmount() { return amount; }
     public void setAmount(Double amount) { this.amount = amount; }
+
+    public Integer getDurationMonths() {
+        if (durationMonths != null) return durationMonths;
+        if (subscriptionPlan != null) {
+            String p = subscriptionPlan.trim().toLowerCase();
+            if (p.contains("1 year") || p.contains("12 month")) return 12;
+            if (p.contains("6 month")) return 6;
+            if (p.contains("3 month")) return 3;
+            if (p.contains("2 month")) return 2;
+            if (p.contains("1 month")) return 1;
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)").matcher(p);
+            if (m.find()) {
+                try {
+                    return Integer.parseInt(m.group(1));
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        return null;
+    }
+    public void setDurationMonths(Integer durationMonths) { this.durationMonths = durationMonths; }
 }

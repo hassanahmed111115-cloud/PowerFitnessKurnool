@@ -422,7 +422,7 @@
                   <!-- Video / Photo Container -->
                   <div class="relative w-44 h-44 rounded-2xl overflow-hidden border-2 border-gym-orange/60 bg-black flex items-center justify-center shadow-lg shadow-gym-orangeGlow/20 flex-shrink-0">
                     <video id="admissionCameraVideo" autoplay playsinline class="hidden w-full h-full object-cover"></video>
-                    <img id="admissionPhotoPreview" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400" alt="Member Photo" class="w-full h-full object-cover">
+                    <img id="admissionPhotoPreview" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400" alt="Member Photo" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400';" class="w-full h-full object-cover">
                     <canvas id="admissionCameraCanvas" class="hidden"></canvas>
                     <div id="liveCameraIndicator" class="hidden absolute top-2 left-2 bg-red-600 text-white text-[9px] font-bold uppercase px-1.5 py-0.5 rounded animate-pulse">
                       ● LIVE
@@ -486,8 +486,8 @@
               <!-- Admission Date, Category, Batch -->
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Admission Date</label>
-                  <input type="date" id="admissionDate" class="w-full bg-slate-900 border border-gym-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gym-orange">
+                  <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Admission Date / Start Date *</label>
+                  <input type="date" id="admissionDate" required onchange="recalculateAdmissionFee()" class="w-full bg-slate-900 border border-gym-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gym-orange">
                 </div>
                 <div>
                   <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Training Category *</label>
@@ -507,32 +507,53 @@
 
               <!-- Subscription Plan & Cardio Option -->
               <div class="p-5 rounded-xl bg-slate-900/90 border border-gym-border space-y-4">
+                <!-- Custom Membership Duration in Months -->
                 <div>
-                  <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Select Subscription Plan *</label>
+                  <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5 flex items-center justify-between">
+                    <span>Membership Duration (Months) *</span>
+                    <span class="text-[11px] font-normal text-slate-400">Custom manual entry or quick presets</span>
+                  </label>
+                  <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <div class="relative w-full sm:w-44">
+                      <input type="number" id="admissionDurationMonths" min="1" step="1" required value="1" placeholder="e.g. 1, 2, 3, 6, 12" oninput="handleDurationMonthsChange()" class="w-full bg-slate-900 border border-gym-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gym-orange font-bold text-center">
+                      <span class="absolute right-3 top-3.5 text-xs text-slate-400 font-semibold pointer-events-none">Months</span>
+                    </div>
+                    <div class="grid grid-cols-4 gap-1.5 flex-1">
+                      <button type="button" onclick="selectDurationMonthsPreset(1)" class="duration-preset-btn px-2 py-2.5 rounded-xl text-xs font-bold border border-gym-border bg-gym-orange/20 text-gym-orange border-gym-orange transition text-center" data-months="1">1 Month</button>
+                      <button type="button" onclick="selectDurationMonthsPreset(3)" class="duration-preset-btn px-2 py-2.5 rounded-xl text-xs font-bold border border-gym-border bg-slate-800 text-slate-300 hover:text-white transition text-center" data-months="3">3 Months</button>
+                      <button type="button" onclick="selectDurationMonthsPreset(6)" class="duration-preset-btn px-2 py-2.5 rounded-xl text-xs font-bold border border-gym-border bg-slate-800 text-slate-300 hover:text-white transition text-center" data-months="6">6 Months</button>
+                      <button type="button" onclick="selectDurationMonthsPreset(12)" class="duration-preset-btn px-2 py-2.5 rounded-xl text-xs font-bold border border-gym-border bg-slate-800 text-slate-300 hover:text-white transition text-center" data-months="12">12 Months (1 Yr)</button>
+                    </div>
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-1">Expiry date is calculated from: <strong>Admission Date + Membership Duration (Months)</strong>.</p>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Subscription Plan Name *</label>
                   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <label class="cursor-pointer">
-                      <input type="radio" name="subPlan" value="1 Month" checked onchange="recalculateAdmissionFee()" class="peer sr-only">
+                      <input type="radio" name="subPlan" value="1 Month" checked onchange="handleSubPlanRadioChange('1 Month', 1)" class="peer sr-only">
                       <div class="p-3 rounded-xl border border-gym-border bg-slate-800 peer-checked:border-gym-orange peer-checked:bg-gym-orange/10 transition text-center">
                         <span class="block text-xs font-bold text-white">1 Month</span>
                         <span class="block text-sm font-display font-bold text-gym-orange">₹800</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
-                      <input type="radio" name="subPlan" value="3 Months" onchange="recalculateAdmissionFee()" class="peer sr-only">
+                      <input type="radio" name="subPlan" value="3 Months" onchange="handleSubPlanRadioChange('3 Months', 3)" class="peer sr-only">
                       <div class="p-3 rounded-xl border border-gym-border bg-slate-800 peer-checked:border-gym-orange peer-checked:bg-gym-orange/10 transition text-center">
                         <span class="block text-xs font-bold text-white">3 Months</span>
                         <span class="block text-sm font-display font-bold text-gym-orange">₹1,800</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
-                      <input type="radio" name="subPlan" value="6 Months" onchange="recalculateAdmissionFee()" class="peer sr-only">
+                      <input type="radio" name="subPlan" value="6 Months" onchange="handleSubPlanRadioChange('6 Months', 6)" class="peer sr-only">
                       <div class="p-3 rounded-xl border border-gym-border bg-slate-800 peer-checked:border-gym-orange peer-checked:bg-gym-orange/10 transition text-center">
                         <span class="block text-xs font-bold text-white">6 Months</span>
                         <span class="block text-sm font-display font-bold text-gym-orange">₹3,500</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
-                      <input type="radio" name="subPlan" value="1 Year" onchange="recalculateAdmissionFee()" class="peer sr-only">
+                      <input type="radio" name="subPlan" value="1 Year" onchange="handleSubPlanRadioChange('1 Year', 12)" class="peer sr-only">
                       <div class="p-3 rounded-xl border border-gym-border bg-slate-800 peer-checked:border-gym-orange peer-checked:bg-gym-orange/10 transition text-center">
                         <span class="block text-xs font-bold text-white">1 Year</span>
                         <span class="block text-sm font-display font-bold text-gym-orange">₹6,800</span>
@@ -567,12 +588,19 @@
                 </div>
 
                 <!-- Dynamic Calculation Summary Box -->
-                <div class="p-4 rounded-xl bg-gradient-to-r from-slate-950 to-slate-900 border border-gym-border flex items-center justify-between">
-                  <div>
-                    <span class="text-xs text-slate-400 block font-medium">Final Membership Fee</span>
-                    <span id="admissionCalculationBreakdown" class="text-[11px] text-slate-500">Enter custom price above (Required)</span>
+                <div class="p-4 rounded-xl bg-gradient-to-r from-slate-950 to-slate-900 border border-gym-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div class="space-y-1">
+                    <span class="text-xs text-slate-400 block font-medium">Membership Period & Fee Breakdown</span>
+                    <div class="text-xs font-bold text-white flex flex-wrap items-center gap-2">
+                      <span>Start: <span id="admissionSummaryStartDate" class="text-gym-orange font-mono">—</span></span>
+                      <span class="text-slate-500">→</span>
+                      <span>Expiry: <span id="admissionSummaryExpiryDate" class="text-emerald-400 font-mono">—</span></span>
+                      <span id="admissionSummaryDurationBadge" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-gym-border font-mono">1 Month</span>
+                    </div>
+                    <span id="admissionCalculationBreakdown" class="text-[11px] text-slate-500 block">Enter Custom Membership Price above (Required)</span>
                   </div>
-                  <div class="text-right">
+                  <div class="text-right w-full sm:w-auto">
+                    <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Final Fee</span>
                     <span id="admissionFinalAmount" class="font-display font-bold text-3xl text-gym-orange">₹0</span>
                   </div>
                 </div>
@@ -2223,6 +2251,119 @@ Sunday: 6:00 AM – 11:00 AM</p>
     </div>
   </div>
 
+  <!-- 2B. EDIT MEMBER MODAL -->
+  <div id="editMemberModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div class="bg-gym-card border border-gym-border rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto relative">
+      <div class="flex items-center justify-between pb-3 border-b border-gym-border">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">✏️</span>
+          <div>
+            <h4 class="font-display font-bold text-xl uppercase text-white tracking-wide">Edit Member</h4>
+            <p class="text-xs text-slate-400">Update member photo, details & dates</p>
+          </div>
+        </div>
+        <button onclick="closeEditMemberModal()" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition">&times;</button>
+      </div>
+
+      <div id="editMemberMsg" class="hidden p-3 rounded-xl text-xs font-semibold"></div>
+
+      <form id="editMemberForm" onsubmit="submitEditMember(event)" class="space-y-4 text-xs">
+        <input type="hidden" id="editMemberId">
+
+        <!-- CHANGE 1: Member Summary & Photo Edit Area -->
+        <div class="p-3.5 rounded-xl bg-slate-900 border border-gym-border space-y-3">
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div class="flex items-center gap-3">
+              <div class="relative group">
+                <img id="editMemberPhotoPreview" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';" class="w-16 h-16 rounded-xl object-cover border border-gym-border shadow-md">
+              </div>
+              <div>
+                <h5 id="editMemberBannerName" class="font-display font-bold text-sm text-white uppercase">—</h5>
+                <p id="editMemberBannerCode" class="font-mono text-[11px] text-gym-orange font-bold">—</p>
+                <span id="editMemberPhotoStatus" class="text-[10px] text-slate-400 block mt-0.5">Current Member Photo</span>
+              </div>
+            </div>
+
+            <!-- Clear Photo Actions: Change Photo / Remove Photo -->
+            <div class="flex items-center gap-2">
+              <label class="cursor-pointer inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-gym-border px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition hover:border-gym-orange">
+                <svg class="w-3.5 h-3.5 text-gym-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span>Change Photo</span>
+                <input type="file" id="editMemberFileInput" accept="image/*" class="hidden" onchange="handleEditMemberPhotoSelect(event)">
+              </label>
+              <button type="button" id="btnRemoveEditMemberPhoto" onclick="removeEditMemberPhoto()" class="inline-flex items-center gap-1 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/60 px-2.5 py-1.5 rounded-xl text-xs font-bold uppercase transition" title="Revert to default photo">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                <span>Remove</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHANGE 2: Admission Date / Start Date & Auto-Calculated Expiry Date -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1.5 flex items-center justify-between">
+              <span>Start / Admission Date *</span>
+              <span class="text-[10px] font-normal text-slate-400">Day / Month / Year</span>
+            </label>
+            <input type="date" id="editMemberAdmissionDate" required class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-gym-orange font-medium" oninput="onEditMemberDateChange()" onchange="onEditMemberDateChange()">
+            <p class="text-[11px] text-slate-400 mt-1">Select date to auto-calculate expiry.</p>
+          </div>
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1.5 flex items-center justify-between">
+              <span>Calculated Expiry Date</span>
+              <span id="editMemberDurationBadge" class="text-[10px] text-gym-orange font-mono font-bold">—</span>
+            </label>
+            <input type="date" id="editMemberExpiryDate" readonly tabindex="-1" class="w-full bg-slate-900/70 border border-gym-border/80 rounded-xl px-3 py-2.5 text-sm text-gym-orange font-mono font-bold cursor-not-allowed">
+            <p id="editMemberDateHint" class="text-[11px] text-slate-400 mt-1">Auto-calculated from Start Date + duration.</p>
+          </div>
+        </div>
+
+        <!-- Full Name & Phone -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Full Name *</label>
+            <input type="text" id="editMemberFullName" required class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-gym-orange">
+          </div>
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Phone Number (10 Digits) *</label>
+            <input type="tel" id="editMemberPhone" required pattern="[0-9]{10}" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-gym-orange font-mono">
+          </div>
+        </div>
+
+        <!-- Category & Batch -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Training Category</label>
+            <select id="editMemberCategory" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-gym-orange">
+              <option value="Strength Training">Strength Training</option>
+              <option value="Cardio">Cardio</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold uppercase text-slate-400 mb-1">Batch</label>
+            <select id="editMemberBatch" class="w-full bg-slate-900 border border-gym-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-gym-orange">
+              <option value="Morning Batch">Morning Batch</option>
+              <option value="Evening Batch">Evening Batch</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div>
+          <label class="block font-bold uppercase text-slate-400 mb-1">Notes</label>
+          <textarea id="editMemberNotes" rows="2" class="w-full bg-slate-900 border border-gym-border rounded-xl p-3 text-white focus:outline-none focus:border-gym-orange"></textarea>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="flex gap-2 pt-2 border-t border-gym-border/60">
+          <button type="button" onclick="closeEditMemberModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold uppercase rounded-xl transition">Cancel</button>
+          <button type="submit" id="btnSaveEditMember" class="flex-1 py-2.5 bg-gym-orange hover:bg-gym-orangeHover text-white font-bold uppercase rounded-xl transition shadow-md shadow-gym-orangeGlow">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 
   <!-- 3. ADD/EDIT SUPPLEMENT MODAL -->
   <div id="supplementModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -2326,7 +2467,7 @@ Sunday: 6:00 AM – 11:00 AM</p>
         <div>
           <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Product Image *</label>
           <div class="flex items-center gap-3">
-            <img id="suppPreviewImg" src="https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=400" class="w-16 h-16 rounded-xl object-cover border border-gym-border">
+            <img id="suppPreviewImg" src="https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=400" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=400';" class="w-16 h-16 rounded-xl object-cover border border-gym-border">
             <div class="flex-1 space-y-1.5">
               <label class="cursor-pointer inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-gym-border px-3 py-2 rounded-xl text-xs font-bold uppercase transition">
                 <svg class="w-3.5 h-3.5 text-gym-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
@@ -2394,7 +2535,7 @@ Sunday: 6:00 AM – 11:00 AM</p>
         
         <!-- Product Card Preview -->
         <div class="p-3.5 rounded-xl bg-slate-900 border border-gym-border flex items-center gap-3.5">
-          <img id="buySuppImage" src="" class="w-16 h-16 rounded-xl object-cover border border-gym-border">
+          <img id="buySuppImage" src="" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=400';" class="w-16 h-16 rounded-xl object-cover border border-gym-border">
           <div class="flex-1 min-w-0">
             <span id="buySuppCategory" class="text-[10px] font-bold uppercase tracking-wider text-gym-orange block">Category</span>
             <h5 id="buySuppName" class="font-bold text-white text-sm truncate">Product Name</h5>

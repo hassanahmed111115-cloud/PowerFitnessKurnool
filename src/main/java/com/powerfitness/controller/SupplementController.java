@@ -24,6 +24,9 @@ public class SupplementController {
     @Autowired
     private AuthService authService;
 
+    @Autowired
+    private com.powerfitness.service.FileStorageService fileStorageService;
+
     // --- View supplements (Both User and Admin) ---
     @GetMapping
     public ResponseEntity<?> getSupplements(
@@ -126,7 +129,10 @@ public class SupplementController {
 
         if (updated.getDescription() != null) s.setDescription(updated.getDescription());
         if (updated.getImageUrl() != null && !updated.getImageUrl().trim().isEmpty()) {
-            s.setImageUrl(updated.getImageUrl());
+            if (s.getImageUrl() != null && !s.getImageUrl().equals(updated.getImageUrl().trim())) {
+                fileStorageService.deleteFile(s.getImageUrl());
+            }
+            s.setImageUrl(updated.getImageUrl().trim());
         }
         if (updated.getStockQuantity() != null) {
             s.setStockQuantity(updated.getStockQuantity());
@@ -200,12 +206,43 @@ public class SupplementController {
             return ResponseEntity.status(403).body(Map.of("error", "Admin access required"));
         }
 
-        if (!supplementRepository.existsById(id)) {
+        Optional<Supplement> sOpt = supplementRepository.findById(id);
+        if (sOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        supplementRepository.deleteById(id);
+        Supplement s = sOpt.get();
+        if (s.getImageUrl() != null) {
+            fileStorageService.deleteFile(s.getImageUrl());
+        }
+
+        supplementRepository.delete(s);
         return ResponseEntity.ok(Map.of("message", "Supplement deleted successfully"));
+    }
+
+    // --- Admin: Delete Supplement Photo ---
+    @DeleteMapping("/{id}/photo")
+    public ResponseEntity<?> deleteSupplementPhoto(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id) {
+
+        User user = authService.getAuthenticatedUser(authHeader);
+        if (user == null || user.getRole() != Role.ADMIN) {
+            return ResponseEntity.status(403).body(Map.of("error", "Admin access required"));
+        }
+
+        Optional<Supplement> sOpt = supplementRepository.findById(id);
+        if (sOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Supplement s = sOpt.get();
+        if (s.getImageUrl() != null) {
+            fileStorageService.deleteFile(s.getImageUrl());
+        }
+        s.setImageUrl("https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=400&auto=format&fit=crop&q=80");
+        supplementRepository.save(s);
+        return ResponseEntity.ok(Map.of("message", "Supplement photo deleted successfully", "imageUrl", s.getImageUrl()));
     }
 
     // --- Private Helper: Validate and Calculate Offer ---

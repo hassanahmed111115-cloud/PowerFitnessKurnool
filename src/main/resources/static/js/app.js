@@ -44,12 +44,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-function initDateInputs() {
+function initDateInputs(forceReset = false) {
   const today = new Date().toISOString().split('T')[0];
   const admDate = document.getElementById('admissionDate');
-  if (admDate) admDate.value = today;
+  if (admDate && (forceReset || !admDate.value)) {
+    admDate.value = today;
+  }
   const trackerDate = document.getElementById('trackerDateInput');
-  if (trackerDate) trackerDate.value = today;
+  if (trackerDate && (forceReset || !trackerDate.value)) {
+    trackerDate.value = today;
+  }
 }
 
 
@@ -647,8 +651,131 @@ function setPresetPhoto(url) {
   updatePhotoPreview(url);
 }
 
+function calculateMembershipExpiry(startDateStr, months) {
+  if (!startDateStr || !months || isNaN(months) || months <= 0) return null;
+  const parts = startDateStr.split('-');
+  if (parts.length !== 3) return null;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+
+  const targetMonth = month + parseInt(months, 10);
+  const targetYear = year + Math.floor(targetMonth / 12);
+  const normalizedMonth = ((targetMonth % 12) + 12) % 12;
+
+  const daysInTargetMonth = new Date(targetYear, normalizedMonth + 1, 0).getDate();
+  const targetDay = Math.min(day, daysInTargetMonth);
+
+  const resDate = new Date(targetYear, normalizedMonth, targetDay);
+  const yyyy = resDate.getFullYear();
+  const mm = String(resDate.getMonth() + 1).padStart(2, '0');
+  const dd = String(resDate.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function selectDurationMonthsPreset(months) {
+  const durInput = document.getElementById('admissionDurationMonths');
+  if (durInput) durInput.value = months;
+
+  document.querySelectorAll('.duration-preset-btn').forEach(btn => {
+    const btnMonths = parseInt(btn.getAttribute('data-months'), 10);
+    if (btnMonths === months) {
+      btn.className = 'duration-preset-btn px-2 py-2.5 rounded-xl text-xs font-bold border border-gym-orange bg-gym-orange/20 text-gym-orange transition text-center';
+    } else {
+      btn.className = 'duration-preset-btn px-2 py-2.5 rounded-xl text-xs font-bold border border-gym-border bg-slate-800 text-slate-300 hover:text-white transition text-center';
+    }
+  });
+
+  const planRadios = document.querySelectorAll('input[name="subPlan"]');
+  planRadios.forEach(r => {
+    if (months === 1 && r.value === '1 Month') r.checked = true;
+    else if (months === 3 && r.value === '3 Months') r.checked = true;
+    else if (months === 6 && r.value === '6 Months') r.checked = true;
+    else if (months === 12 && r.value === '1 Year') r.checked = true;
+    else if (months !== 1 && months !== 3 && months !== 6 && months !== 12) r.checked = false;
+  });
+
+  recalculateAdmissionFee();
+}
+
+function handleDurationMonthsChange() {
+  const durInput = document.getElementById('admissionDurationMonths');
+  const months = durInput ? parseInt(durInput.value, 10) : 1;
+
+  document.querySelectorAll('.duration-preset-btn').forEach(btn => {
+    const btnMonths = parseInt(btn.getAttribute('data-months'), 10);
+    if (btnMonths === months) {
+      btn.className = 'duration-preset-btn px-2 py-2.5 rounded-xl text-xs font-bold border border-gym-orange bg-gym-orange/20 text-gym-orange transition text-center';
+    } else {
+      btn.className = 'duration-preset-btn px-2 py-2.5 rounded-xl text-xs font-bold border border-gym-border bg-slate-800 text-slate-300 hover:text-white transition text-center';
+    }
+  });
+
+  const planRadios = document.querySelectorAll('input[name="subPlan"]');
+  let matchedRadio = false;
+  planRadios.forEach(r => {
+    if ((months === 1 && r.value === '1 Month') ||
+        (months === 3 && r.value === '3 Months') ||
+        (months === 6 && r.value === '6 Months') ||
+        (months === 12 && r.value === '1 Year')) {
+      r.checked = true;
+      matchedRadio = true;
+    }
+  });
+  if (!matchedRadio) {
+    planRadios.forEach(r => r.checked = false);
+  }
+
+  recalculateAdmissionFee();
+}
+
+function handleSubPlanRadioChange(planName, months) {
+  const durInput = document.getElementById('admissionDurationMonths');
+  if (durInput) durInput.value = months;
+
+  document.querySelectorAll('.duration-preset-btn').forEach(btn => {
+    const btnMonths = parseInt(btn.getAttribute('data-months'), 10);
+    if (btnMonths === months) {
+      btn.className = 'duration-preset-btn px-2 py-2.5 rounded-xl text-xs font-bold border border-gym-orange bg-gym-orange/20 text-gym-orange transition text-center';
+    } else {
+      btn.className = 'duration-preset-btn px-2 py-2.5 rounded-xl text-xs font-bold border border-gym-border bg-slate-800 text-slate-300 hover:text-white transition text-center';
+    }
+  });
+
+  recalculateAdmissionFee();
+}
+
 function recalculateAdmissionFee() {
-  const selectedPlan = document.querySelector('input[name="subPlan"]:checked')?.value || '1 Month';
+  const selectedPlanRadio = document.querySelector('input[name="subPlan"]:checked');
+  const durInput = document.getElementById('admissionDurationMonths');
+  let durationMonths = durInput ? parseInt(durInput.value, 10) : 1;
+  if (isNaN(durationMonths) || durationMonths <= 0) durationMonths = 1;
+
+  let planName = selectedPlanRadio ? selectedPlanRadio.value : (durationMonths + (durationMonths === 1 ? ' Month' : ' Months'));
+  if (durationMonths === 12 && !selectedPlanRadio) planName = '1 Year (12 Mo)';
+
+  const admDateInput = document.getElementById('admissionDate');
+  const admDateVal = admDateInput ? admDateInput.value : '';
+
+  const summaryStart = document.getElementById('admissionSummaryStartDate');
+  const summaryExpiry = document.getElementById('admissionSummaryExpiryDate');
+  const summaryBadge = document.getElementById('admissionSummaryDurationBadge');
+
+  if (summaryStart) {
+    summaryStart.textContent = admDateVal || 'Select Date';
+  }
+
+  if (admDateVal && durationMonths > 0) {
+    const calculatedExpiry = calculateMembershipExpiry(admDateVal, durationMonths);
+    if (summaryExpiry) summaryExpiry.textContent = calculatedExpiry || '—';
+  } else {
+    if (summaryExpiry) summaryExpiry.textContent = '—';
+  }
+
+  if (summaryBadge) {
+    summaryBadge.textContent = durationMonths === 1 ? '1 Month' : (durationMonths === 12 ? '12 Months (1 Yr)' : `${durationMonths} Months`);
+  }
+
   const hasCardio = document.getElementById('admissionCardioOption')?.checked || false;
   const customPriceInput = document.getElementById('admissionCustomPrice');
   const customVal = customPriceInput ? parseFloat(customPriceInput.value) : NaN;
@@ -656,7 +783,7 @@ function recalculateAdmissionFee() {
   if (!isNaN(customVal) && customVal > 0) {
     document.getElementById('admissionFinalAmount').textContent = formatInr(customVal);
     document.getElementById('admissionCalculationBreakdown').textContent =
-      `Custom Price: ₹${customVal.toLocaleString()} (Plan: ${selectedPlan}${hasCardio ? ' + Cardio' : ''})`;
+      `Custom Price: ₹${customVal.toLocaleString()} (${planName}${hasCardio ? ' + Cardio' : ''})`;
   } else {
     document.getElementById('admissionFinalAmount').textContent = '₹0';
     document.getElementById('admissionCalculationBreakdown').textContent =
@@ -933,7 +1060,25 @@ async function handleSupplementFileSelect(e) {
 
 async function handleAdmissionSubmit(e) {
   e.preventDefault();
-  const selectedPlan = document.querySelector('input[name="subPlan"]:checked')?.value || '1 Month';
+  const selectedPlanRadio = document.querySelector('input[name="subPlan"]:checked');
+  const durInput = document.getElementById('admissionDurationMonths');
+  const durationMonths = durInput ? parseInt(durInput.value, 10) : NaN;
+
+  if (isNaN(durationMonths) || durationMonths <= 0) {
+    showToast('Please enter a valid Membership Duration in months (e.g. 1, 3, 6, 12)', 'error');
+    if (durInput) durInput.focus();
+    return;
+  }
+
+  const admissionDateInput = document.getElementById('admissionDate');
+  const admissionDate = admissionDateInput ? admissionDateInput.value : '';
+  if (!admissionDate) {
+    showToast('Please select Admission Date / Start Date', 'error');
+    if (admissionDateInput) admissionDateInput.focus();
+    return;
+  }
+
+  const selectedPlan = selectedPlanRadio?.value || (durationMonths === 12 ? '1 Year' : (durationMonths + (durationMonths === 1 ? ' Month' : ' Months')));
   const hasCardio = document.getElementById('admissionCardioOption')?.checked || false;
   const customPriceInput = document.getElementById('admissionCustomPrice');
   const customPriceRaw = customPriceInput ? customPriceInput.value.trim() : '';
@@ -949,7 +1094,8 @@ async function handleAdmissionSubmit(e) {
     fullName: document.getElementById('admissionFullName').value.trim(),
     phoneNumber: document.getElementById('admissionPhone').value.trim(),
     photoUrl: document.getElementById('admissionPhotoUrl').value.trim() || document.getElementById('admissionPhotoPreview').src,
-    admissionDate: document.getElementById('admissionDate').value,
+    admissionDate: admissionDate,
+    durationMonths: durationMonths,
     subscriptionPlan: selectedPlan,
     trainingCategory: document.getElementById('admissionCategory').value,
     batch: document.getElementById('admissionBatch').value,
@@ -977,12 +1123,13 @@ async function handleAdmissionSubmit(e) {
       return;
     }
 
-    showToast(`Athlete ${data.fullName} enrolled as ${data.memberCode}!`, 'success');
+    showToast(`Athlete ${data.fullName} enrolled as ${data.memberCode}! Expiry: ${data.expiryDate}`, 'success');
     document.getElementById('admissionForm').reset();
     if (document.getElementById('admissionCustomPrice')) {
       document.getElementById('admissionCustomPrice').value = '';
     }
-    initDateInputs();
+    initDateInputs(true);
+    selectDurationMonthsPreset(1);
     recalculateAdmissionFee();
     navigateTo('members');
   } catch (err) {
@@ -1029,7 +1176,7 @@ async function loadMembers() {
       <tr class="hover:bg-slate-800/50 transition">
         <td class="p-3.5">
           <div class="flex items-center gap-3">
-            <img src="${m.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}" class="w-10 h-10 rounded-xl object-cover border border-gym-border">
+            <img src="${m.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';" class="w-10 h-10 rounded-xl object-cover border border-gym-border">
             <div>
               <p class="font-bold text-white">${m.fullName}</p>
               <p class="text-[11px] text-slate-400">Admitted: ${m.admissionDate}</p>
@@ -1060,6 +1207,7 @@ async function loadMembers() {
         </td>
         <td class="p-3.5 text-right space-x-1">
           <button onclick="viewMemberDetail(${m.id})" title="View Profile" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg">👁️</button>
+          <button onclick="openEditMemberModal(${m.id})" title="Edit Member" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-white rounded-lg transition">✏️</button>
           <button onclick="openChangeMemberPasswordModal(${m.id}, '${escapeHtml(m.fullName)}', '${m.memberCode}')" title="Change User Password" class="p-1.5 bg-blue-950/40 hover:bg-blue-600 text-blue-400 hover:text-white rounded-lg transition">🔑</button>
           <button onclick="openRenewModalForMember(${m.id}, '${escapeHtml(m.fullName)}', '${m.memberCode}', '${m.expiryDate}', '${m.subscriptionPlan}')" title="Renew" class="p-1.5 bg-gym-orange/20 hover:bg-gym-orange text-gym-orange hover:text-white rounded-lg transition">🔄</button>
           <button onclick="deleteMember(${m.id}, '${escapeHtml(m.fullName)}')" title="Delete" class="p-1.5 bg-red-950/40 hover:bg-gym-crimson text-gym-crimson hover:text-white rounded-lg transition">🗑️</button>
@@ -1084,11 +1232,16 @@ async function viewMemberDetail(id) {
     const content = document.getElementById('memberProfileContent');
     content.innerHTML = `
       <div class="flex items-center gap-5 p-4 rounded-xl bg-slate-900 border border-gym-border">
-        <img src="${m.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400'}" class="w-20 h-20 rounded-2xl object-cover border-2 border-gym-orange">
+        <div class="relative group">
+          <img src="${m.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400'}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400';" class="w-20 h-20 rounded-2xl object-cover border-2 border-gym-orange">
+          ${m.photoUrl && !m.photoUrl.includes('unsplash.com') ? `
+            <button onclick="deleteMemberPhotoInProfile(${m.id})" title="Delete Custom Photo" class="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-600 hover:bg-red-700 text-white text-[10px] flex items-center justify-center shadow font-bold transition">✕</button>
+          ` : ''}
+        </div>
         <div class="space-y-1">
           <h4 class="font-display font-bold text-2xl uppercase text-white">${m.fullName}</h4>
           <p class="font-mono text-xs text-gym-orange font-bold">Member Code: ${m.memberCode}</p>
-          <p class="text-xs text-slate-400">Phone: ${m.phoneNumber} | Admitted: ${m.admissionDate}</p>
+          <p class="text-xs text-slate-400">Phone: ${m.phoneNumber} | Admitted: ${m.admissionDate}${m.durationMonths ? ' | Duration: ' + m.durationMonths + ' Mo' : ''}</p>
           <span class="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold ${getStatusBadgeClass(m.status)}">${m.status}</span>
         </div>
       </div>
@@ -1150,7 +1303,10 @@ async function viewMemberDetail(id) {
         </div>
       </div>
 
-      <div class="pt-3 border-t border-gym-border flex justify-end">
+      <div class="pt-3 border-t border-gym-border flex items-center justify-end gap-2">
+        <button onclick="closeMemberProfileModal(); openEditMemberModal(${m.id})" class="px-4 py-2 bg-gym-orange/20 hover:bg-gym-orange text-gym-orange hover:text-white border border-gym-orange/30 rounded-xl text-xs font-bold uppercase transition flex items-center gap-1.5">
+          <span>✏️ Edit Member</span>
+        </button>
         <button onclick="closeMemberProfileModal(); openChangeMemberPasswordModal(${m.id}, '${escapeHtml(m.fullName)}', '${m.memberCode}')" class="px-4 py-2 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 rounded-xl text-xs font-bold uppercase transition flex items-center gap-1.5">
           <span>🔑 Change User Password</span>
         </button>
@@ -1165,6 +1321,306 @@ async function viewMemberDetail(id) {
 
 function closeMemberProfileModal() {
   document.getElementById('memberProfileModal').classList.add('hidden');
+}
+
+let editMemberPhotoState = {
+  originalPhotoUrl: '',
+  selectedFile: null,
+  isRemoved: false
+};
+let editMemberCurrentDuration = 1;
+
+function calculateMembershipExpiry(startDateStr, durationMonths) {
+  if (!startDateStr || !durationMonths) return '';
+  const parts = startDateStr.split('-');
+  if (parts.length !== 3) return '';
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1; // 0-indexed month
+  const day = parseInt(parts[2], 10);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return '';
+
+  const totalMonths = month + parseInt(durationMonths, 10);
+  const targetYear = year + Math.floor(totalMonths / 12);
+  const targetMonth = ((totalMonths % 12) + 12) % 12;
+
+  // Month-end safe clamping matching Java LocalDate.plusMonths
+  const daysInTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+  const clampedDay = Math.min(day, daysInTargetMonth);
+
+  const mm = String(targetMonth + 1).padStart(2, '0');
+  const dd = String(clampedDay).padStart(2, '0');
+  return `${targetYear}-${mm}-${dd}`;
+}
+
+function onEditMemberDateChange() {
+  const admInput = document.getElementById('editMemberAdmissionDate');
+  const expiryInput = document.getElementById('editMemberExpiryDate');
+  if (!admInput || !expiryInput) return;
+
+  const newStartDate = admInput.value;
+  if (!newStartDate) {
+    expiryInput.value = '';
+    return;
+  }
+
+  const newExpiry = calculateMembershipExpiry(newStartDate, editMemberCurrentDuration);
+  expiryInput.value = newExpiry;
+}
+
+function handleEditMemberPhotoSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    showToast('Please select a valid image file (JPEG, PNG, WEBP)', 'error');
+    return;
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    showToast('Image size exceeds 10MB limit', 'error');
+    return;
+  }
+
+  editMemberPhotoState.selectedFile = file;
+  editMemberPhotoState.isRemoved = false;
+
+  const preview = document.getElementById('editMemberPhotoPreview');
+  if (preview) {
+    preview.src = URL.createObjectURL(file);
+  }
+
+  const statusText = document.getElementById('editMemberPhotoStatus');
+  if (statusText) {
+    statusText.textContent = `New photo selected: ${file.name} (will upload on save)`;
+    statusText.className = 'text-[10px] text-amber-400 font-semibold block mt-0.5';
+  }
+}
+
+function removeEditMemberPhoto() {
+  const defaultPhoto = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80';
+  editMemberPhotoState.selectedFile = null;
+  editMemberPhotoState.isRemoved = true;
+
+  const fileInput = document.getElementById('editMemberFileInput');
+  if (fileInput) fileInput.value = '';
+
+  const preview = document.getElementById('editMemberPhotoPreview');
+  if (preview) {
+    preview.src = defaultPhoto;
+  }
+
+  const statusText = document.getElementById('editMemberPhotoStatus');
+  if (statusText) {
+    statusText.textContent = 'Photo removed (default photo will apply on save)';
+    statusText.className = 'text-[10px] text-red-400 font-semibold block mt-0.5';
+  }
+  showToast('Photo marked for removal. Click Save Changes to confirm.', 'info');
+}
+
+async function openEditMemberModal(id) {
+  try {
+    const res = await fetch(`/api/admin/members/${id}`, {
+      headers: { 'Authorization': `Bearer ${STATE.token}` }
+    });
+    if (!res.ok) {
+      showToast('Could not load member details', 'error');
+      return;
+    }
+    const d = await res.json();
+    const m = d.member;
+
+    document.getElementById('editMemberId').value = m.id;
+    document.getElementById('editMemberBannerName').textContent = m.fullName;
+    document.getElementById('editMemberBannerCode').textContent = m.memberCode;
+
+    // Photo initialization
+    const currentPhoto = m.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80';
+    editMemberPhotoState = {
+      originalPhotoUrl: currentPhoto,
+      selectedFile: null,
+      isRemoved: false
+    };
+    const photoEl = document.getElementById('editMemberPhotoPreview');
+    if (photoEl) {
+      photoEl.src = currentPhoto;
+    }
+    const statusText = document.getElementById('editMemberPhotoStatus');
+    if (statusText) {
+      statusText.textContent = 'Current Member Photo';
+      statusText.className = 'text-[10px] text-slate-400 block mt-0.5';
+    }
+    const fileInput = document.getElementById('editMemberFileInput');
+    if (fileInput) fileInput.value = '';
+
+    // Duration and Date initialization
+    editMemberCurrentDuration = m.durationMonths || 1;
+    const durationBadge = document.getElementById('editMemberDurationBadge');
+    if (durationBadge) {
+      durationBadge.textContent = `Duration: ${editMemberCurrentDuration} ${editMemberCurrentDuration === 1 ? 'Month' : 'Months'}`;
+    }
+
+    const admDateInput = document.getElementById('editMemberAdmissionDate');
+    const startDate = m.admissionDate || m.startDate || '';
+    if (admDateInput) {
+      admDateInput.value = startDate;
+    }
+
+    const expiryInput = document.getElementById('editMemberExpiryDate');
+    if (expiryInput) {
+      if (startDate) {
+        expiryInput.value = calculateMembershipExpiry(startDate, editMemberCurrentDuration) || m.expiryDate || '';
+      } else {
+        expiryInput.value = m.expiryDate || '';
+      }
+    }
+
+    const hint = document.getElementById('editMemberDateHint');
+    if (hint) {
+      hint.textContent = `Auto-calculated from Start Date + ${editMemberCurrentDuration} ${editMemberCurrentDuration === 1 ? 'Month' : 'Months'}.`;
+    }
+
+    document.getElementById('editMemberFullName').value = m.fullName || '';
+    document.getElementById('editMemberPhone').value = m.phoneNumber || '';
+    document.getElementById('editMemberCategory').value = m.trainingCategory || 'Strength Training';
+    document.getElementById('editMemberBatch').value = m.batch || 'Morning Batch';
+    document.getElementById('editMemberNotes').value = m.notes || '';
+
+    const msg = document.getElementById('editMemberMsg');
+    if (msg) msg.classList.add('hidden');
+
+    document.getElementById('editMemberModal').classList.remove('hidden');
+  } catch (err) {
+    console.error('Error opening edit member modal:', err);
+    showToast('Failed to load member for editing', 'error');
+  }
+}
+
+function closeEditMemberModal() {
+  const modal = document.getElementById('editMemberModal');
+  if (modal) modal.classList.add('hidden');
+  editMemberPhotoState = { originalPhotoUrl: '', selectedFile: null, isRemoved: false };
+}
+
+async function submitEditMember(e) {
+  e.preventDefault();
+  const id = document.getElementById('editMemberId')?.value;
+  if (!id) return;
+
+  const admDateInput = document.getElementById('editMemberAdmissionDate');
+  const admissionDate = admDateInput ? admDateInput.value.trim() : '';
+
+  if (!admissionDate) {
+    showToast('Please select a valid Start Date / Admission Date', 'error');
+    if (admDateInput) admDateInput.focus();
+    return;
+  }
+
+  const btn = document.getElementById('btnSaveEditMember');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+  }
+
+  try {
+    let finalPhotoUrl = editMemberPhotoState.originalPhotoUrl;
+
+    // CHANGE 1: Upload new photo to permanent photo storage if selected
+    if (editMemberPhotoState.selectedFile) {
+      const statusText = document.getElementById('editMemberPhotoStatus');
+      if (statusText) statusText.textContent = 'Uploading photo to permanent storage...';
+
+      const formData = new FormData();
+      formData.append('file', editMemberPhotoState.selectedFile);
+
+      const uploadRes = await fetch('/api/upload/member-photo', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${STATE.token}` },
+        body: formData
+      });
+
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) {
+        showToast(uploadData.error || 'Failed to upload new photo. Old photo preserved.', 'error');
+        if (statusText) statusText.textContent = 'Upload failed. Old photo preserved.';
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Save Changes';
+        }
+        return; // Old photo is preserved since update was aborted!
+      }
+
+      finalPhotoUrl = uploadData.url;
+    } else if (editMemberPhotoState.isRemoved) {
+      finalPhotoUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80';
+    }
+
+    const payload = {
+      admissionDate: admissionDate,
+      durationMonths: editMemberCurrentDuration,
+      photoUrl: finalPhotoUrl,
+      fullName: document.getElementById('editMemberFullName')?.value.trim(),
+      phoneNumber: document.getElementById('editMemberPhone')?.value.trim(),
+      trainingCategory: document.getElementById('editMemberCategory')?.value,
+      batch: document.getElementById('editMemberBatch')?.value,
+      notes: document.getElementById('editMemberNotes')?.value.trim()
+    };
+
+    const res = await fetch(`/api/admin/members/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${STATE.token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Failed to update member', 'error');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+      }
+      return;
+    }
+
+    showToast(`Member updated! Start Date: ${data.admissionDate}, Expiry Date: ${data.expiryDate}`, 'success');
+    closeEditMemberModal();
+    loadMembers();
+
+    // If profile modal is open, refresh it as well
+    const profileModal = document.getElementById('memberProfileModal');
+    if (profileModal && !profileModal.classList.contains('hidden')) {
+      viewMemberDetail(id);
+    }
+  } catch (err) {
+    console.error('Error updating member:', err);
+    showToast('Network error while updating member', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Save Changes';
+    }
+  }
+}
+
+async function deleteMemberPhotoInProfile(id) {
+  if (!confirm('Are you sure you want to remove this member\'s custom uploaded photo from persistent storage?')) return;
+  try {
+    const res = await fetch(`/api/admin/members/${id}/photo`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${STATE.token}` }
+    });
+    if (res.ok) {
+      showToast('Member photo removed successfully', 'info');
+      viewMemberDetail(id);
+      loadMembers();
+    } else {
+      showToast('Could not delete photo', 'error');
+    }
+  } catch (e) {
+    showToast('Network error deleting photo', 'error');
+  }
 }
 
 async function deleteMember(id, name) {
@@ -1223,7 +1679,7 @@ async function loadRenewals() {
       <tr class="hover:bg-slate-800/50 transition">
         <td class="p-3.5">
           <div class="flex items-center gap-3">
-            <img src="${m.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}" class="w-10 h-10 rounded-xl object-cover border border-gym-border">
+            <img src="${m.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';" class="w-10 h-10 rounded-xl object-cover border border-gym-border">
             <div>
               <p class="font-bold text-white">${m.fullName}</p>
               <p class="text-[11px] font-mono text-gym-orange">${m.memberCode}</p>
@@ -1854,7 +2310,7 @@ async function loadSupplements() {
         <div class="bg-gym-card border border-gym-border rounded-2xl overflow-hidden flex flex-col group hover:border-gym-orange/50 transition shadow-xl relative">
           <!-- Top Media -->
           <div class="h-48 bg-slate-900 relative overflow-hidden flex items-center justify-center">
-            <img src="${s.imageUrl || 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=400'}" alt="${s.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+            <img src="${s.imageUrl || 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=400'}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=400';" alt="${s.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
             
             ${isOfferActive ? `
               <span class="absolute top-2.5 left-2.5 bg-gradient-to-r from-red-600 to-gym-orange text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg shadow-lg flex items-center gap-1">
@@ -2241,7 +2697,11 @@ async function loadUserDashboard() {
 
     document.getElementById('userDashWelcomeName').textContent = `Welcome, ${d.fullName} 💪`;
     document.getElementById('userDashMemberCode').textContent = d.memberCode;
-    document.getElementById('userDashPhoto').src = d.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400';
+    const userPhotoEl = document.getElementById('userDashPhoto');
+    if (userPhotoEl) {
+      userPhotoEl.src = d.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400';
+      userPhotoEl.onerror = () => { userPhotoEl.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400'; };
+    }
 
     const statusBadge = document.getElementById('userDashStatusBadge');
     statusBadge.textContent = d.status;
@@ -2280,7 +2740,11 @@ async function loadUserProfileCard() {
     const m = await res.json();
 
     // Digital Membership Card
-    if (document.getElementById('cardPhoto')) document.getElementById('cardPhoto').src = m.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400';
+    const cardPhotoEl = document.getElementById('cardPhoto');
+    if (cardPhotoEl) {
+      cardPhotoEl.src = m.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400';
+      cardPhotoEl.onerror = () => { cardPhotoEl.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400'; };
+    }
     if (document.getElementById('cardFullName')) document.getElementById('cardFullName').textContent = m.fullName;
     if (document.getElementById('cardMemberCode')) document.getElementById('cardMemberCode').textContent = `ID: ${m.memberCode}`;
     if (document.getElementById('cardPhone')) document.getElementById('cardPhone').textContent = `Phone: ${m.phoneNumber}`;

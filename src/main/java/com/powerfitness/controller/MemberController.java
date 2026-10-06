@@ -10,6 +10,7 @@ import com.powerfitness.repository.UserRepository;
 import com.powerfitness.service.AuthService;
 import com.powerfitness.service.PricingService;
 import com.powerfitness.service.SubscriptionService;
+import com.powerfitness.service.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,6 +44,9 @@ public class MemberController {
 
     @Autowired
     private SubscriptionService subscriptionService;
+
+    @Autowired
+    private FileStorageService fileStorageService;
 
     // --- Admin: List with Search & Filters ---
     @GetMapping("/admin/members")
@@ -151,8 +155,25 @@ public class MemberController {
             return ResponseEntity.badRequest().body(Map.of("error", "Custom Membership Price must be a valid positive amount greater than 0"));
         }
 
-        LocalDate admissionDate = req.getAdmissionDate() != null ? req.getAdmissionDate() : LocalDate.now();
-        String plan = req.getSubscriptionPlan() != null ? req.getSubscriptionPlan() : "1 Month";
+        // Validation: Custom Admission Date / Start Date is mandatory
+        if (req.getAdmissionDate() == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Admission Date / Start Date is required"));
+        }
+        LocalDate admissionDate = req.getAdmissionDate();
+
+        // Validation: Custom Membership Duration (Months) is mandatory and must be a positive integer
+        Integer durationMonths = req.getDurationMonths();
+        if (durationMonths == null || durationMonths <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Membership Duration (Months) must be a valid positive number greater than 0"));
+        }
+
+        // Calculate Expiry Date from: Custom Admission Date + Custom Membership Months
+        LocalDate expiryDate = admissionDate.plusMonths(durationMonths);
+
+        String plan = req.getSubscriptionPlan();
+        if (plan == null || plan.trim().isEmpty()) {
+            plan = durationMonths == 12 ? "1 Year" : (durationMonths + (durationMonths == 1 ? " Month" : " Months"));
+        }
         String category = req.getTrainingCategory() != null ? req.getTrainingCategory() : "Strength Training";
         String batch = req.getBatch() != null ? req.getBatch() : "Morning Batch";
         boolean cardio = req.isCardioOption();
@@ -161,10 +182,6 @@ public class MemberController {
         double totalFee = customPrice;
         double cardioFee = cardio ? Math.min(PricingService.CARDIO_FEE, totalFee) : 0.0;
         double baseFee = Math.max(0.0, totalFee - cardioFee);
-
-        // Calculate Expiry
-        int durationDays = pricingService.getPlanDurationDays(plan);
-        LocalDate expiryDate = admissionDate.plusDays(durationDays);
 
         // Generate Member Code uniquely
         String memberCode = generateNextMemberCode();
@@ -191,13 +208,14 @@ public class MemberController {
             member.setPhoneNumber(phone);
             member.setPhotoUrl(photo);
             member.setAdmissionDate(admissionDate);
+            member.setStartDate(admissionDate);
+            member.setDurationMonths(durationMonths);
             member.setSubscriptionPlan(plan);
             member.setTrainingCategory(category);
             member.setBatch(batch);
             member.setHasCardio(cardio);
             member.setTotalFee(totalFee);
             member.setCustomPrice(totalFee);
-            member.setStartDate(admissionDate);
             member.setExpiryDate(expiryDate);
             member.setStatus("ACTIVE");
             member.setNotes(req.getNotes());
@@ -301,8 +319,51 @@ public class MemberController {
                 userRepository.save(m.getUser());
             }
         }
-        if (req.getPhotoUrl() != null && !req.getPhotoUrl().trim().isEmpty()) {
-            m.setPhotoUrl(req.getPhotoUrl().trim());
+        if (req.getAdmissionDate() != null) {
+            if (req.getAdmissionDate().getYear() < 1900 || req.getAdmissionDate().getYear() > 2100) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Please provide a valid Admission Date / Start Date"));
+            }
+            m.setAdmissionDate(req.getAdmissionDate());
+            m.setStartDate(req.getAdmissionDate());
+
+            // CHANGE 2: Automatically recalculate expiry date: New Start Date + Existing Membership Duration
+            int duration = (req.getDurationMonths() != null && req.getDurationMonths() > 0)
+                    ? req.getDurationMonths()
+                    : (m.getDurationMonths() != null && m.getDurationMonths() > 0 ? m.getDurationMonths() : 1);
+            m.setDurationMonths(duration);
+            m.setExpiryDate(req.getAdmissionDate().plusMonths(duration));
+
+            subscriptionService.updateMemberSubscriptionStatus(m);
+        } else if (req.getDurationMonths() != null) {
+            if (req.getDurationMonths() <= 0) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Membership duration (months) must be a positive number greater than 0"));
+            }
+            m.setDurationMonths(req.getDurationMonths());
+            LocalDate baseDate = m.getAdmissionDate() != null ? m.getAdmissionDate() : (m.getStartDate() != null ? m.getStartDate() : LocalDate.now());
+            m.setExpiryDate(baseDate.plusMonths(req.getDurationMonths()));
+            subscriptionService.updateMemberSubscriptionStatus(m);
+        }
+        if (req.getPhotoUrl() != null) {
+            String pUrl = req.getPhotoUrl().trim();
+            if (pUrl.equalsIgnoreCase("REMOVE") || pUrl.equalsIgnoreCase("DEFAULT") || pUrl.isEmpty()) {
+                if (m.getPhotoUrl() != null) {
+                    fileStorageService.deleteFile(m.getPhotoUrl());
+                }
+                m.setPhotoUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80");
+            } else {
+                String newPhotoUrl = pUrl;
+                if (newPhotoUrl.startsWith("data:image/") || (newPhotoUrl.length() > 200 && !newPhotoUrl.startsWith("http") && !newPhotoUrl.startsWith("/"))) {
+                    try {
+                        newPhotoUrl = fileStorageService.saveMemberPhotoBase64(newPhotoUrl);
+                    } catch (Exception ex) {
+                        return ResponseEntity.badRequest().body(Map.of("error", "Failed to store member photo: " + ex.getMessage()));
+                    }
+                }
+                if (m.getPhotoUrl() != null && !m.getPhotoUrl().equals(newPhotoUrl)) {
+                    fileStorageService.deleteFile(m.getPhotoUrl());
+                }
+                m.setPhotoUrl(newPhotoUrl);
+            }
         }
         if (req.getTrainingCategory() != null) m.setTrainingCategory(req.getTrainingCategory());
         if (req.getBatch() != null) m.setBatch(req.getBatch());
@@ -320,6 +381,31 @@ public class MemberController {
         return ResponseEntity.ok(updated);
     }
 
+    // --- Admin: Delete Member Photo ---
+    @DeleteMapping("/admin/members/{id}/photo")
+    public ResponseEntity<?> deleteMemberPhoto(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id) {
+
+        User user = authService.getAuthenticatedUser(authHeader);
+        if (user == null || user.getRole() != Role.ADMIN) {
+            return ResponseEntity.status(403).body(Map.of("error", "Admin access required"));
+        }
+
+        Optional<Member> mOpt = memberRepository.findById(id);
+        if (mOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Member m = mOpt.get();
+        if (m.getPhotoUrl() != null) {
+            fileStorageService.deleteFile(m.getPhotoUrl());
+        }
+        m.setPhotoUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80");
+        memberRepository.save(m);
+        return ResponseEntity.ok(Map.of("message", "Member photo deleted successfully", "photoUrl", m.getPhotoUrl()));
+    }
+
     // --- Admin: Delete Member ---
     @DeleteMapping("/admin/members/{id}")
     public ResponseEntity<?> deleteMember(
@@ -334,6 +420,10 @@ public class MemberController {
         Optional<Member> mOpt = memberRepository.findById(id);
         if (mOpt.isPresent()) {
             Member m = mOpt.get();
+            // delete persistent photo if uploaded
+            if (m.getPhotoUrl() != null) {
+                fileStorageService.deleteFile(m.getPhotoUrl());
+            }
             // delete payments
             List<Payment> pList = paymentRepository.findByMemberIdOrderByPaymentDateDesc(m.getId());
             paymentRepository.deleteAll(pList);
